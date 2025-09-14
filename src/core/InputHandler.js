@@ -11,7 +11,8 @@ const KEY_TO_DIR = {
   d: 'right'
 };
 
-const ACTION_KEYS = ['Enter'];
+// Enter and Space trigger generic actions like interaction
+const ACTION_KEYS = ['Enter', ' ', 'Space'];
 const CANCEL_KEYS = ['Escape'];
 
 export default class InputHandler {
