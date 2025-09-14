@@ -11,7 +11,9 @@ const KEY_TO_DIR = {
   d: 'right'
 };
 
-const ACTION_KEYS = ['Enter'];
+// Include Space so players can interact with NPCs using the classic
+// Pokémon control scheme.
+const ACTION_KEYS = ['Enter', ' '];
 const CANCEL_KEYS = ['Escape'];
 
 export default class InputHandler {

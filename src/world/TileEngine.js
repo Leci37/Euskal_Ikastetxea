@@ -10,6 +10,7 @@ class TileEngine {
       width: ctx.canvas?.width || 0,
       height: ctx.canvas?.height || 0,
     };
+    this.labels = [];
   }
 
   updateViewport(width, height) {
@@ -58,6 +59,7 @@ class TileEngine {
 
   render() {
     MapManager.current.layers?.filter(l => l.type === 'tilelayer').forEach(l => this.drawLayer(l));
+    this._drawLabels();
     this._drawCollisionDebug();
     this._drawGrid();
   }
@@ -65,6 +67,26 @@ class TileEngine {
   centerOn(x, y) {
     this.camera.x = x - this.viewport.width / 2;
     this.camera.y = y - this.viewport.height / 2;
+  }
+
+  setLabels(labels) {
+    this.labels = labels;
+  }
+
+  _drawLabels() {
+    if (!this.labels?.length) return;
+    const tileSize = this.tileSize;
+    this.ctx.font = '10px monospace';
+    this.labels.forEach(l => {
+      const sx = l.x * tileSize - this.camera.x;
+      const sy = l.y * tileSize - this.camera.y - 2;
+      const text = l.text || '';
+      const w = this.ctx.measureText(text).width + 4;
+      this.ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      this.ctx.fillRect(sx - 2, sy - 10, w, 10);
+      this.ctx.fillStyle = '#000';
+      this.ctx.fillText(text, sx, sy - 2);
+    });
   }
 
   _drawCollisionDebug() {
