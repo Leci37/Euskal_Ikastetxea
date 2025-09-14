@@ -1,32 +1,60 @@
-# Educational Video Game: Euskera School - Pokémon Style
-## Analysis and Approach for the Client
+# Euskal Ikastetxea
 
-### 🎮 General Concept
+_Educational Video Game: Euskera School - Pokémon Style_
+
 An educational video game in 2D RPG format, similar to Pokémon, where students explore a virtual school, interacting with characters, reading signs, and completing activities to learn Basque in an immersive and fun way.
 
-### 🏗️ System Architecture
+## Current Status
 
-#### **1. Game Engine**
-- **Canvas 2D HTML5**: Main rendering
-- **State System**: Menus, exploration, dialogues, inventory
-- **Game Loop**: Update/Render at 60fps
-- **Event System**: Interactions and triggers
+Euskal Ikastetxea is in active development. The core engine, scene management, and a basic world are now functional, laying the groundwork for further content and systems.
 
-#### **2. World Management**
-- **MapManager**: Map loading and rendering
-- **TileEngine**: Tile system for the world
-- **CollisionSystem**: Collision and boundary detection
-- **TransitionManager**: Changes between classrooms/areas
+## Getting Started
 
-#### **3. Character System**
-- **Player**: Player avatar with grid-based movement
-- **NPCManager**: Teachers, students, school staff
-- **DialogueSystem**: Multiple choice conversation system
-- **CharacterController**: Movement and animations
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   ```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+3. **Run the development server**
+   ```bash
+   npm start
+   ```
+4. **Open the application**
+   Navigate to [http://localhost:3000](http://localhost:3000) in a web browser.
 
----
+## Tech Stack
 
-### 🏫 Virtual School Structure
+- **HTML5 Canvas** for rendering
+- **JavaScript (ES6 Modules)** for game logic
+- **Node.js** with the `serve` package for the development server
+
+## Architecture
+
+The project is organized into modular systems that power gameplay and user interaction:
+
+- **GameEngine** – orchestrates the game loop, rendering, and global state.
+- **EventManager** – dispatches and listens for in-game events.
+- **SceneManager** – handles transitions between scenes such as the world map and dialogues.
+- **TileEngine** – renders tile-based maps and manages collisions.
+- **DialogueEngine** – displays conversations and branching dialogue choices.
+
+## Project Structure
+
+```
+src/
+├── core/      # Base engine classes (GameEngine, EventManager, SceneManager)
+├── scenes/    # Scene definitions and transitions
+├── world/     # Tile maps, assets, and world configuration
+├── events/    # Event definitions and triggers
+└── ui/        # UI components like dialogue boxes and menus
+```
+
+## Project Vision & Roadmap
+
+### Virtual School Structure
 
 #### **Main Areas**
 1. **Entrance Hall**
@@ -51,52 +79,7 @@ An educational video game in 2D RPG format, similar to Pokémon, where students 
    - **Music Room**: Traditional songs
    - **Garden**: Nature and environmental vocabulary
 
----
-
-### 💻 Technical Architecture - Core Classes
-
-#### **Core Classes**
-```
-Game
-├── GameEngine (main engine)
-├── StateManager (state management)
-├── AssetLoader (resource loading)
-└── SaveManager (player progress)
-
-World
-├── Map (school maps)
-├── Tile (world elements)
-├── Zone (specific areas)
-└── InteractableObject (clickable objects)
-
-Characters
-├── Player (player)
-├── NPC (non-playable characters)
-├── Teacher (specialized teachers)
-└── Student (other students)
-
-Learning
-├── LessonManager (lessons and content)
-├── ProgressService (progress tracking)
-├── QuizSystem (assessments)
-└── RewardSystem (achievements and badges)
-
-UI
-├── DialogueBox (conversations)
-├── Inventory (collected objects)
-├── MenuSystem (navigation)
-└── HUD (main interface)
-```
-
-#### **Learning Systems**
-- **ContentDatabase**: Basque language content database
-- **AdaptiveLearning**: Difficulty adjustment based on progress
-- **SpeechRecognition**: Pronunciation recognition (optional)
-- **ProgressAnalytics**: Learning metrics
-
----
-
-### 🎯 Game Mechanics
+### Game Mechanics
 
 #### **Exploration and Navigation**
 - **Grid-Based Movement**: Like classic Pokémon (4 directions)
@@ -116,49 +99,7 @@ UI
 - **Mini-games**: Specific activities by skill
 - **Integrated Assessments**: Natural quizzes within the narrative
 
----
-
-### 🎨 Visual and Audio Elements
-
-#### **Art and Aesthetics**
-- **16-bit Pixel Art**: Nostalgic and accessible style
-- **Basque Color Palette**: Green, red, white
-- **Animated Sprites**: Characters with personality
-- **Responsive UI**: Adaptable to different devices
-
-#### **Audio System**
-- **Ambient Music**: Soft melodies for each area
-- **Sound Effects**: Feedback for interactions
-- **Voices in Basque**: Native pronunciation (essential)
-- **Cultural Sounds**: Txistu, drum, etc.
-
----
-
-### 📱 Technical Considerations
-
-#### **Web Technologies**
-- **HTML5 Canvas**: Optimized 2D rendering
-- **JavaScript ES6+**: Object-oriented programming
-- **Web Audio API**: Advanced sound system
-- **LocalStorage**: Local progress saving
-- **PWA Ready**: Installable as a mobile app
-
-
-#### **Optimization**
-- **Asset Streaming**: Progressive loading of resources
-- **Memory Management**: Cleaning up unused objects
-- **Mobile Responsive**: Touch controls and adaptive UI
-- **Offline Capability**: Functionality without internet
-
-#### **Accessibility**
-- **Subtitles**: For all audio
-- **Configurable Controls**: Keyboard and mouse/touch
-- **Speed Options**: Adjustable text and audio
-- **High Contrast Mode**: For users with visual impairments
-
----
-
-### 📊 Development Plan
+### Development Plan
 
 #### **Phase 1: Foundation (4 weeks)**
 - Basic game engine
@@ -184,41 +125,34 @@ UI
 - Performance optimization
 - Deployment and distribution
 
----
+### Additional Vision
 
-### 💰 Commercial Considerations
+#### Visual and Audio Elements
+- **16-bit Pixel Art** with a Basque color palette
+- **Ambient Music** and cultural sound effects
+- **Voices in Basque** to showcase native pronunciation
 
-#### **Distribution Platforms**
-- **Web Direct**: Own hosting with subscription
-- **Institutional**: Licenses for schools
-- **App Stores**: PWA version in stores
-- **LMS Integration**: Compatible with educational platforms
+#### Technical Considerations
+- **HTML5 Canvas** and **Web Audio API**
+- **LocalStorage** for saving progress
+- **PWA Ready** for installation on devices
 
-#### **Monetization Model**
-- **Freemium**: Free basic content, advanced content for a fee
-- **Educational Licenses**: Subscriptions for institutions
-- **Additional Content**: DLCs with new areas and lessons
+#### Commercial Considerations
+- **Freemium** model with optional DLCs
+- **Institutional Licenses** for schools
+- **Success Metrics** focused on engagement and learning outcomes
 
-#### **Success Metrics**
-- **Engagement**: Playtime and retention
-- **Learning Outcomes**: Measurable educational progress
-- **User Satisfaction**: Ratings and feedback
-- **Adoption Rate**: Growth in active users
-
----
-
-### ✅ Deliverables for the Client
-
-1. **Playable Prototype**: 15-20 minute demo
+#### Deliverables
+1. **Playable Prototype**: 15–20 minute demo
 2. **Design Document**: Complete specifications
 3. **Development Plan**: Detailed timeline with milestones
 4. **Budget**: Breakdown of costs by phase
 5. **Market Analysis**: Competition and opportunities
 6. **Marketing Strategy**: Launch and promotion plan
 
-### 🎯 Value Proposition
+#### Value Proposition
+- **For Students**: Immersive, fun, and pressure-free learning
+- **For Teachers**: Support tool with progress metrics
+- **For Institutions**: Innovative solution for teaching Basque
+- **For Basque Culture**: Preservation and promotion of the language in a modern way
 
-**For Students**: Immersive, fun, and pressure-free learning
-**For Teachers**: Support tool with progress metrics
-**For Institutions**: Innovative solution for teaching Basque
-**For Basque Culture**: Preservation and promotion of the language in a modern way
