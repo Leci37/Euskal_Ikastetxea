@@ -1,8 +1,11 @@
 import { Events } from '../events/EventManager.js';
 import SpriteAnimator from '../graphics/SpriteAnimator.js';
+import MapManager from '../world/MapManager.js';
+import AudioManager from '../audio/AudioManager.js';
 
 const TILE_SIZE = 16;
-const MOVE_TIME = 0.18; // seconds per tile
+// Movement timing roughly matching Pokémon Emerald (250ms per tile)
+const MOVE_TIME = 0.25; // seconds per tile
 
 /**
  * Handles player movement and rendering with a Pokémon-style feel.
@@ -13,12 +16,14 @@ class PlayerController {
    * @param {HTMLImageElement} spriteSheet
    * @param {any} input
    * @param {import('../events/EventManager.js').default} eventManager
+   * @param {import('./NPCManager.js').default} npcManager
    */
-  constructor(collisionSystem, spriteSheet, input, eventManager) {
+  constructor(collisionSystem, spriteSheet, input, eventManager, npcManager) {
     this.collisionSystem = collisionSystem;
     this.animator = new SpriteAnimator(spriteSheet);
     this.input = input;
     this.eventManager = eventManager;
+    this.npcManager = npcManager;
 
     this.gridPos = { x: 0, y: 0 }; // in tile coordinates
     this.pixelPos = { x: 0, y: 0 }; // interpolated pixel position
@@ -41,6 +46,7 @@ class PlayerController {
 
     // Listen to abstracted input events
     this.eventManager.subscribe(Events.INPUT_DIRECTION_DOWN, (e) => this.enqueueMove(e.direction));
+    this.eventManager.subscribe(Events.INPUT_ACTION_PRESS, () => this.interact());
   }
 
   enqueueMove(dir) {
@@ -72,6 +78,7 @@ class PlayerController {
     this.targetPixel.y = target.y * TILE_SIZE;
     this.gridPos = target;
     this.eventManager.emit(Events.PLAYER_MOVED, { pos: { ...this.gridPos } });
+    AudioManager.playSound('move');
     return true;
   }
 
@@ -86,6 +93,11 @@ class PlayerController {
       if (t >= 1) {
         this.moving = false;
         this.state = 'idle';
+        // trigger warps when landing on a tile
+        const warp = MapManager.warps.find(
+          w => Math.floor(w.x / TILE_SIZE) === this.gridPos.x && Math.floor(w.y / TILE_SIZE) === this.gridPos.y,
+        );
+        if (warp) this.eventManager.emit(Events.PLAYER_ENTER_WARP, warp);
         // Continue moving if direction is still held
         if (this.input && this.input.isDown(this.direction)) {
           this._tryStartMove(this.direction);
@@ -106,6 +118,19 @@ class PlayerController {
         this.animator.elapsed = 0;
       }
     }
+  }
+
+  /** Interact with NPC in front of the player */
+  interact() {
+    if (!this.npcManager) return;
+    const offset = { x: 0, y: 0 };
+    if (this.direction === 'up') offset.y = -1;
+    if (this.direction === 'down') offset.y = 1;
+    if (this.direction === 'left') offset.x = -1;
+    if (this.direction === 'right') offset.x = 1;
+    const target = { x: this.gridPos.x + offset.x, y: this.gridPos.y + offset.y };
+    this.npcManager.interactAt(target.x, target.y);
+    AudioManager.playSound('interact');
   }
 
   render(ctx) {

@@ -8,6 +8,8 @@ import AssetLoader from '../core/AssetLoader.js';
 import EventManager from '../events/EventManager.js';
 import NPCManager from '../characters/NPCManager.js';
 import DialogueEngine from '../dialogue/DialogueEngine.js';
+import UIManager from '../ui/UIManager.js';
+import '../dialogue/DialogueSystem.js';
 
 class OverworldScene extends Scene {
   constructor() {
@@ -22,6 +24,7 @@ class OverworldScene extends Scene {
     this.player = null;
     this.npcManager = NPCManager;
     this.dialogueEngine = DialogueEngine;
+    this.ui = UIManager;
     this.fps = 0;
   }
 
@@ -51,6 +54,7 @@ class OverworldScene extends Scene {
       playerSprite,
       this.input,
       EventManager,
+      this.npcManager,
     );
     this.player.gridPos = { x: 5, y: 5 };
     this.player.pixelPos = { x: 5 * 16, y: 5 * 16 };
@@ -78,6 +82,7 @@ class OverworldScene extends Scene {
     this.player?.update(dt);
     this.npcManager.update(dt);
     this.dialogueEngine.update(dt);
+    this.ui.update(dt);
     if (this.player) {
       this.tileEngine.centerOn(
         (this.player.pixelPos.x || this.player.gridPos.x * 16) + 8,
@@ -97,11 +102,13 @@ class OverworldScene extends Scene {
     this.tileEngine.render();
     this.player?.render(ctx);
     this.npcManager.render(ctx);
+    this.npcManager.renderPrompts(ctx, this.player);
     this.dialogueEngine.render(ctx);
+    this.ui.render(ctx);
     ctx.fillStyle = 'white';
     ctx.font = '10px monospace';
     ctx.fillText(
-      `(${this.player?.gridPos.x ?? 0},${this.player?.gridPos.y ?? 0}) ${this.fps.toFixed(0)}fps`,
+      `${this.fps.toFixed(0)}fps`,
       2,
       10,
     );

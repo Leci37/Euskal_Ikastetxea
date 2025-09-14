@@ -25,7 +25,7 @@ class TileEngine {
       // Try to load actual image; if it fails create a placeholder tileset
       AssetLoader.loadImages([tileset.image])
         .catch(() => AssetLoader.generateTilesetPlaceholder(tileset));
-      image = AssetLoader.getImage(tileset.image) || AssetLoader.generateTilesetPlaceholder(tileset);
+      image = AssetLoader.getImage(tileset.image) || null;
     }
 
     const cols = tileset.columns;
@@ -39,19 +39,32 @@ class TileEngine {
         const index = y * layer.width + x;
         const id = layer.data[index];
         if (id === 0) continue;
-        const sx = ((id - 1) % cols) * tileSize;
-        const sy = Math.floor((id - 1) / cols) * tileSize;
-        this.ctx.drawImage(
-          image,
-          sx,
-          sy,
-          tileSize,
-          tileSize,
-          x * tileSize - this.camera.x,
-          y * tileSize - this.camera.y,
-          tileSize,
-          tileSize,
-        );
+        if (image) {
+          const sx = ((id - 1) % cols) * tileSize;
+          const sy = Math.floor((id - 1) / cols) * tileSize;
+          this.ctx.drawImage(
+            image,
+            sx,
+            sy,
+            tileSize,
+            tileSize,
+            x * tileSize - this.camera.x,
+            y * tileSize - this.camera.y,
+            tileSize,
+            tileSize,
+          );
+        } else {
+          // basic variety fallback
+          const colors = ['#006233', '#ffffff', '#d52b1e', '#8b4513'];
+          const color = colors[id % colors.length];
+          this.ctx.fillStyle = color;
+          this.ctx.fillRect(
+            x * tileSize - this.camera.x,
+            y * tileSize - this.camera.y,
+            tileSize,
+            tileSize,
+          );
+        }
       }
     }
   }

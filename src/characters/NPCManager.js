@@ -32,6 +32,11 @@ class NPC {
       TILE_SIZE
     );
   }
+
+  /** Trigger all interactable components */
+  interact() {
+    this.components.forEach(c => c.trigger?.());
+  }
 }
 
 class NPCManager {
@@ -49,6 +54,39 @@ class NPCManager {
 
   render(ctx) {
     this.npcs.forEach(n => n.render(ctx));
+  }
+
+  /** Return NPC at grid coordinate */
+  getNPCAt(x, y) {
+    return this.npcs.find(n => n.pos.x === x && n.pos.y === y);
+  }
+
+  /** Trigger NPC at coordinate */
+  interactAt(x, y) {
+    const npc = this.getNPCAt(x, y);
+    npc?.interact();
+  }
+
+  /** Render interaction prompt if player faces an NPC */
+  renderPrompts(ctx, player) {
+    const dir = player.direction;
+    const offset = { x: 0, y: 0 };
+    if (dir === 'up') offset.y = -1;
+    if (dir === 'down') offset.y = 1;
+    if (dir === 'left') offset.x = -1;
+    if (dir === 'right') offset.x = 1;
+    const target = { x: player.gridPos.x + offset.x, y: player.gridPos.y + offset.y };
+    const npc = this.getNPCAt(target.x, target.y);
+    if (!npc) return;
+    const px = npc.pos.x * TILE_SIZE;
+    const py = npc.pos.y * TILE_SIZE;
+    ctx.fillStyle = 'yellow';
+    ctx.beginPath();
+    ctx.arc(px + TILE_SIZE / 2, py - 2, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '6px monospace';
+    ctx.fillText('SPACE', px - 4, py - 6);
   }
 }
 
