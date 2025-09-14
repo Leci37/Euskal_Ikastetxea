@@ -46,8 +46,11 @@ class NPCManager {
     this.npcs = [];
   }
 
-  load(defs, defaultSprite) {
-    this.npcs = defs.map((d, i) => new NPC(d, i, d.sprite || defaultSprite));
+  load(defs, spriteMap = {}) {
+    this.npcs = defs.map((d, i) => {
+      const sprite = d.sprite || (d.spriteKey ? spriteMap[d.spriteKey] : spriteMap.default);
+      return new NPC(d, i, sprite);
+    });
   }
 
   update(dt) {
