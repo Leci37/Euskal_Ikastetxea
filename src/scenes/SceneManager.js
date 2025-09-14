@@ -1,32 +1,61 @@
-import EventManager, { Events } from '../events/EventManager.js';
-import TransitionManager from '../world/TransitionManager.js';
-
+// Manages switching and updating of all game scenes.
 class SceneManager {
   constructor() {
-    this.scenes = new Map();
-    this.active = null;
+    this.registry = new Map(); // name -> Scene class
+    this.current = null; // active scene instance
+    this.transitioning = false;
   }
 
-  registerScene(name, scene) {
-    this.scenes.set(name, scene);
+  /** Register a scene class by name */
+  registerScene(name, sceneClass) {
+    this.registry.set(name, sceneClass);
   }
 
-  switchTo(name, data) {
-    const next = this.scenes.get(name);
-    if (!next) throw new Error('Scene not found: ' + name);
-    if (this.active && this.active.onExit) this.active.onExit();
-    this.active = new next(data);
-    if (this.active.onEnter) this.active.onEnter(data);
+  /**
+   * Switch to another scene, handling the full lifecycle.
+   * @param {string} sceneName
+   * @param {*} transitionData
+   */
+  async switchTo(sceneName, transitionData) {
+    if (this.transitioning) return;
+    const SceneClass = this.registry.get(sceneName);
+    if (!SceneClass) throw new Error(`Scene not found: ${sceneName}`);
+
+    this.transitioning = true;
+
+    // Exit current scene
+    if (this.current?.onExit) {
+      this.current.onExit();
+    }
+
+    // Instantiate and preload new scene
+    const newScene = new SceneClass();
+    if (newScene.preload) {
+      await newScene.preload();
+    }
+
+    // Enter new scene
+    if (newScene.onEnter) {
+      await newScene.onEnter(transitionData);
+    }
+
+    this.current = newScene;
+    this.transitioning = false;
   }
 
+  /** Delegate update to active scene */
   update(dt) {
-    this.active?.update?.(dt);
+    if (!this.transitioning) {
+      this.current?.update?.(dt);
+    }
   }
 
+  /** Delegate render to active scene */
   render(ctx) {
-    this.active?.render?.(ctx);
+    if (!this.transitioning) {
+      this.current?.render?.(ctx);
+    }
   }
 }
 
-const manager = new SceneManager();
-export default manager;
+export default new SceneManager();
