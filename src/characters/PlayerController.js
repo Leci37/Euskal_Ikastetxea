@@ -1,7 +1,8 @@
 import EventManager, { Events } from '../events/EventManager.js';
-import CollisionSystem from '../world/CollisionSystem.js';
-import SpriteAnimator from '../graphics/SpriteAnimator.js';
-import InputHandler from '../core/InputHandler.js';
+
+// Dependencies are injected through the constructor to decouple this controller
+// from specific implementations. This makes the class more flexible and
+// improves testability.
 
 const TILE_SIZE = 16;
 const MOVE_TIME = 0.18; // seconds per tile
@@ -10,7 +11,7 @@ const MOVE_TIME = 0.18; // seconds per tile
  * Handles player movement and rendering with a Pokémon-style feel.
  */
 class PlayerController {
-  constructor(spriteImage) {
+  constructor(collisionSystem, spriteAnimator, inputHandler) {
     this.gridPos = { x: 0, y: 0 }; // in tile coordinates
     this.pixelPos = { x: 0, y: 0 }; // interpolated pixel position
     this.direction = 'down';
@@ -23,7 +24,9 @@ class PlayerController {
     this.pending = [];
 
     this.enabled = true;
-    this.animator = new SpriteAnimator(spriteImage, 100);
+    this.collisionSystem = collisionSystem;
+    this.animator = spriteAnimator;
+    this.inputHandler = inputHandler;
 
     // Disable movement during dialogues and quizzes
     EventManager.subscribe(Events.DIALOGUE_STARTED, () => (this.enabled = false));
@@ -51,7 +54,7 @@ class PlayerController {
       x: this.gridPos.x + delta.x,
       y: this.gridPos.y + delta.y,
     };
-    if (CollisionSystem.checkCollision(target.x, target.y)) {
+    if (this.collisionSystem.checkCollision(target.x, target.y)) {
       return false; // blocked
     }
     this.direction = dir;
@@ -79,7 +82,7 @@ class PlayerController {
         this.moving = false;
         this.state = 'idle';
         // Continue moving if direction is still held
-        if (InputHandler.isDown(this.direction)) {
+        if (this.inputHandler.isDown(this.direction)) {
           this._tryStartMove(this.direction);
         }
       }
