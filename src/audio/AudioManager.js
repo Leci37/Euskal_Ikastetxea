@@ -1,48 +1,79 @@
+import AssetLoader from '../core/AssetLoader.js';
+
+/**
+ * Handles playback of music, sound effects and pronunciations.
+ */
 class AudioManager {
   constructor() {
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     this.buffers = new Map();
     this.musicSource = null;
-    this.volumes = { music: 0.5, sfx: 1 };
+    this.musicGain = this.ctx.createGain();
+    this.sfxGain = this.ctx.createGain();
+    this.musicGain.gain.value = 0.5;
+    this.sfxGain.gain.value = 1;
+    this.musicGain.connect(this.ctx.destination);
+    this.sfxGain.connect(this.ctx.destination);
   }
 
-  loadAudio(key, arrayBuffer) {
-    return this.ctx.decodeAudioData(arrayBuffer).then(buf => {
-      this.buffers.set(key, buf);
-      return buf;
-    });
+  /**
+   * Decode and cache audio files using the AssetLoader.
+   * @param {Array<{name:string,src:string}>} manifest
+   */
+  async load(manifest = []) {
+    const paths = manifest.map((a) => a.src);
+    await AssetLoader.loadAudio(paths);
+    for (const asset of manifest) {
+      const audio = AssetLoader.getAudio(asset.src);
+      const response = await fetch(audio.src);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = await this.ctx.decodeAudioData(arrayBuffer);
+      this.buffers.set(asset.name, buffer);
+    }
   }
 
-  playMusic(key) {
+  playMusic(name, loop = true) {
     this.stopMusic();
-    const src = this.ctx.createBufferSource();
-    src.buffer = this.buffers.get(key);
-    src.loop = true;
-    const gain = this.ctx.createGain();
-    gain.gain.value = this.volumes.music;
-    src.connect(gain).connect(this.ctx.destination);
-    src.start(0);
-    this.musicSource = src;
+    const buffer = this.buffers.get(name);
+    if (!buffer) return;
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = loop;
+    source.connect(this.musicGain);
+    source.start();
+    this.musicSource = source;
   }
 
-  stopMusic() {
-    this.musicSource?.stop();
+  stopMusic(fade = 0.5) {
+    if (!this.musicSource) return;
+    const now = this.ctx.currentTime;
+    this.musicGain.gain.cancelScheduledValues(now);
+    this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, now);
+    this.musicGain.gain.linearRampToValueAtTime(0, now + fade);
+    this.musicSource.stop(now + fade);
     this.musicSource = null;
   }
 
-  playSFX(key) {
+  playSound(name) {
+    const buffer = this.buffers.get(name);
+    if (!buffer) return;
     const src = this.ctx.createBufferSource();
-    src.buffer = this.buffers.get(key);
-    const gain = this.ctx.createGain();
-    gain.gain.value = this.volumes.sfx;
-    src.connect(gain).connect(this.ctx.destination);
-    src.start(0);
+    src.buffer = buffer;
+    src.connect(this.sfxGain);
+    src.start();
   }
 
-  playEuskeraWord(key) {
-    this.playSFX(key);
+  playEuskeraWord(word) {
+    this.playSound(`euskera_${word}`);
+  }
+
+  setMusicVolume(v) {
+    this.musicGain.gain.value = v;
+  }
+
+  setSfxVolume(v) {
+    this.sfxGain.gain.value = v;
   }
 }
 
-const audio = new AudioManager();
-export default audio;
+export default new AudioManager();

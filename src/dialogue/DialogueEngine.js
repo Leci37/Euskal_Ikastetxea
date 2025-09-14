@@ -1,49 +1,70 @@
 import EventManager, { Events } from '../events/EventManager.js';
-import DialogueBox from '../ui/DialogueBox.js';
 import ContentDatabase from '../education/ContentDatabase.js';
+import PokemonDialogueBox from '../ui/PokemonDialogueBox.js';
 
+/**
+ * Manages in-game conversations using a Pokémon-style presentation.
+ */
 class DialogueEngine {
   constructor() {
-    this.active = null;
-    this.index = 0;
-    this.box = new DialogueBox();
+    this.script = null; // array of pages
+    this.page = 0;
+    this.box = new PokemonDialogueBox();
+    this.activeId = null;
+
+    EventManager.subscribe(Events.INPUT_ACTION_PRESS, () => this.advance());
   }
 
-  startDialogue(id) {
-    this.active = ContentDatabase.getDialogue(id);
-    this.index = 0;
-    this.box.open();
-    this.showLine();
-    EventManager.emit(Events.DIALOGUE_STARTED, id);
+  startDialogue(dialogueId) {
+    const dialogue = ContentDatabase.getDialogue(dialogueId);
+    if (!dialogue) return;
+    this.activeId = dialogueId;
+    this.script = Array.isArray(dialogue) ? dialogue : dialogue.lines;
+    this.page = 0;
+    this._showPage();
+    EventManager.emit(Events.DIALOGUE_STARTED, { id: dialogueId });
   }
 
-  showLine() {
-    if (!this.active) return;
-    const line = this.active.lines[this.index];
+  _showPage() {
+    const line = this.script[this.page];
     if (!line) {
       this.end();
-    } else {
-      this.box.setText(line.text, line.translation);
+      return;
     }
+    const text = line.euskera || line.text || '';
+    const translation = line.translation || '';
+    this.box.show(text, translation);
   }
 
   advance() {
-    this.index++;
-    this.showLine();
-  }
-
-  chooseOption(i) {
-    const opt = this.active.options[i];
-    if (opt.quiz) EventManager.emit(Events.QUIZ_TRIGGER, opt.quiz);
-    this.end();
+    if (!this.script) return;
+    if (!this.box.isFinished()) {
+      this.box.skip();
+      return;
+    }
+    this.page += 1;
+    if (this.page >= this.script.length) {
+      this.end();
+    } else {
+      this._showPage();
+    }
   }
 
   end() {
-    this.active = null;
-    this.box.close();
-    EventManager.emit(Events.DIALOGUE_FINISHED);
+    this.box.hide();
+    this.script = null;
+    const id = this.activeId;
+    this.activeId = null;
+    EventManager.emit(Events.DIALOGUE_FINISHED, { id });
+  }
+
+  update(dt) {
+    this.box.update(dt);
+  }
+
+  render(ctx) {
+    this.box.render(ctx);
   }
 }
 
-const engine = new DialogueEngine();
-export default engine;
+export default new DialogueEngine();
