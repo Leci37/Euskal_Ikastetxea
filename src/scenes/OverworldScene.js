@@ -73,6 +73,7 @@ class OverworldScene extends Scene {
           x: o.x / tileSize,
           y: o.y / tileSize,
           dialogue: props.dialogueId,
+          quizId: props.quizId,
         };
       });
     const receptionistSprite = AssetLoader.getImage(receptionistPath);
@@ -82,8 +83,11 @@ class OverworldScene extends Scene {
   }
 
   onDialogueFinished(e) {
-    if (e.id === 'QUIZ_GIVER_INTRO') {
-      SceneManager.switchTo('VocabularyQuizScene', { quizId: 'VOCAB_QUIZ_1' });
+    const npc = this.npcManager.npcs?.find(
+      n => n.dialogueId === e.id && n.quizId,
+    );
+    if (npc) {
+      SceneManager.switchTo('VocabularyQuizScene', { quizId: npc.quizId });
     }
   }
 
