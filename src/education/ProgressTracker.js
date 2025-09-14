@@ -21,15 +21,15 @@ class ProgressTracker {
     EventManager.subscribe(Events.QUIZ_COMPLETED, (e) => this._onQuizCompleted(e));
   }
 
-  _onLessonCompleted({ lessonId, xp = 20, vocab = [] }) {
-    this.completedLessons.add(lessonId);
+  _onLessonCompleted({ lesson, xp = 20, vocab = [] }) {
+    this.completedLessons.add(lesson);
     vocab.forEach((w) => this.knownVocab.add(w));
     this.addXP(xp);
     this.persist();
   }
 
-  _onQuizCompleted({ quizId, xp = 50 }) {
-    this.addXP(xp);
+  _onQuizCompleted({ score }) {
+    this.addXP(score);
     this.persist();
   }
 

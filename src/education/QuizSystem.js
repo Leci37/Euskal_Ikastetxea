@@ -11,7 +11,7 @@ export default class QuizSystem {
   startQuiz(id) {
     this.active = ContentDatabase.getQuiz(id);
     this.score = 0;
-    EventManager.emit(Events.QUIZ_STARTED, id);
+    EventManager.emit(Events.QUIZ_STARTED, { id });
   }
 
   submitAnswer(answer) {

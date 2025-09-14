@@ -11,7 +11,7 @@ export class DialogueComponent extends NPCComponent {
     this.dialogueId = dialogueId;
   }
   trigger() {
-    EventManager.emit(Events.DIALOGUE_STARTED, this.dialogueId);
+    EventManager.emit(Events.DIALOGUE_STARTED, { id: this.dialogueId });
   }
 }
 
