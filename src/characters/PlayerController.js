@@ -100,28 +100,36 @@ class PlayerController {
     if (this.moving) {
       this.animator.update(dt * 1000); // animator expects ms
     } else {
-      this.animator.frame = 0;
-      this.animator.elapsed = 0;
+      if (this.animator) {
+        this.animator.frame = 0;
+        this.animator.elapsed = 0;
+      }
     }
   }
 
   render(ctx) {
-    const frame = this.animator.frame;
-    const dirRow = { down: 0, left: 1, right: 2, up: 3 }[this.direction];
     const px = this.moving ? this.pixelPos.x : this.gridPos.x * TILE_SIZE;
     const py = this.moving ? this.pixelPos.y : this.gridPos.y * TILE_SIZE;
-
-    ctx.drawImage(
-      this.animator.sprite,
-      frame * TILE_SIZE,
-      dirRow * TILE_SIZE,
-      TILE_SIZE,
-      TILE_SIZE,
-      px,
-      py,
-      TILE_SIZE,
-      TILE_SIZE
-    );
+    if (this.animator && this.animator.sprite) {
+      const frame = this.animator.frame;
+      const dirRow = { down: 0, left: 1, right: 2, up: 3 }[this.direction];
+      ctx.drawImage(
+        this.animator.sprite,
+        frame * TILE_SIZE,
+        dirRow * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE,
+        px,
+        py,
+        TILE_SIZE,
+        TILE_SIZE
+      );
+    } else {
+      // Placeholder player rectangle
+      ctx.fillStyle = 'blue';
+      const size = TILE_SIZE * 2;
+      ctx.fillRect(px, py - (size - TILE_SIZE), size, size);
+    }
   }
 }
 

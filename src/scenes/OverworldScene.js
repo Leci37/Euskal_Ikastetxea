@@ -20,7 +20,8 @@ class OverworldScene extends Scene {
     this.tileEngine = new TileEngine(dummyCtx, 16);
     this.collisionSystem = CollisionSystem;
     this.input = new InputHandler();
-    const playerSprite = AssetLoader.getImage('player_sprite.png');
+    const playerSprite = AssetLoader.getImage('player_sprite.png')
+      || AssetLoader.createPlaceholder('player_sprite.png', 32, 32, 'blue');
     this.animator = new SpriteAnimator(playerSprite);
     this.player = new PlayerController(
       this.collisionSystem,
@@ -30,6 +31,7 @@ class OverworldScene extends Scene {
     );
     this.npcManager = NPCManager;
     this.dialogueEngine = DialogueEngine;
+    this.fps = 0;
   }
 
   async onEnter(data) {
@@ -37,7 +39,15 @@ class OverworldScene extends Scene {
     const tileset = map.tilesets?.[0];
     if (tileset) {
       this.tileEngine.tileSize = tileset.tilewidth || map.tilewidth || this.tileEngine.tileSize;
-      await AssetLoader.loadImages([tileset.image]);
+      try {
+        await AssetLoader.loadImages([tileset.image]);
+      } catch {
+        /* ignore */
+      }
+      const img = AssetLoader.getImage(tileset.image);
+      if (!img || img.width === tileset.tilewidth) {
+        AssetLoader.generateTilesetPlaceholder(tileset);
+      }
     }
 
     this.player.gridPos = { x: 5, y: 5 };
@@ -65,6 +75,11 @@ class OverworldScene extends Scene {
     this.player.update(dt);
     this.npcManager.update(dt);
     this.dialogueEngine.update(dt);
+    this.tileEngine.centerOn(
+      (this.player.pixelPos.x || this.player.gridPos.x * 16) + 8,
+      (this.player.pixelPos.y || this.player.gridPos.y * 16) + 8,
+    );
+    if (dt > 0) this.fps = 1 / dt;
   }
 
   render(ctx) {
@@ -78,6 +93,13 @@ class OverworldScene extends Scene {
     this.player.render(ctx);
     this.npcManager.render(ctx);
     this.dialogueEngine.render(ctx);
+    ctx.fillStyle = 'white';
+    ctx.font = '10px monospace';
+    ctx.fillText(
+      `(${this.player.gridPos.x},${this.player.gridPos.y}) ${this.fps.toFixed(0)}fps`,
+      2,
+      10,
+    );
   }
 }
 

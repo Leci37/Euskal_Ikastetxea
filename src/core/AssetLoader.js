@@ -54,14 +54,19 @@ class AssetLoader {
     if (this.imageCache.has(path)) {
       return Promise.resolve(this.imageCache.get(path));
     }
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
         this.imageCache.set(path, img);
         this._enforceLimit(this.imageCache, this.maxImages);
         resolve(img);
       };
-      img.onerror = reject;
+      img.onerror = () => {
+        // Generate a simple placeholder so the game can run without assets
+        const placeholder = this._generatePlaceholderForPath(path);
+        this.imageCache.set(path, placeholder);
+        resolve(placeholder);
+      };
       img.src = path;
     });
   }
@@ -126,6 +131,56 @@ class AssetLoader {
     });
     this.audioCache.clear();
     this.jsonCache.clear();
+  }
+
+  // --- Placeholder generation helpers ----------------------------------
+
+  _generatePlaceholderForPath(path) {
+    // Default to a 16x16 magenta tile with yellow border
+    const size = /player/i.test(path) ? 32 : 16;
+    const color = /player/i.test(path) ? 'blue' : 'magenta';
+    return this.createPlaceholder(path, size, size, color);
+  }
+
+  createPlaceholder(key, width = 16, height = 16, color = 'magenta') {
+    if (typeof document === 'undefined') return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = 'yellow';
+    ctx.strokeRect(0, 0, width, height);
+    this.imageCache.set(key, canvas);
+    return canvas;
+  }
+
+  generateTilesetPlaceholder(tileset) {
+    if (!tileset) return null;
+    const {
+      tilewidth = 16,
+      tileheight = 16,
+      tilecount = 1,
+      columns = 1,
+      image,
+    } = tileset;
+    if (typeof document === 'undefined') return null;
+    const rows = Math.ceil(tilecount / columns);
+    const canvas = document.createElement('canvas');
+    canvas.width = columns * tilewidth;
+    canvas.height = rows * tileheight;
+    const ctx = canvas.getContext('2d');
+    for (let i = 0; i < tilecount; i++) {
+      const x = (i % columns) * tilewidth;
+      const y = Math.floor(i / columns) * tileheight;
+      ctx.fillStyle = `hsl(${(i * 47) % 360},50%,50%)`;
+      ctx.fillRect(x, y, tilewidth, tileheight);
+      ctx.strokeStyle = 'yellow';
+      ctx.strokeRect(x, y, tilewidth, tileheight);
+    }
+    this.imageCache.set(image, canvas);
+    return canvas;
   }
 }
 
