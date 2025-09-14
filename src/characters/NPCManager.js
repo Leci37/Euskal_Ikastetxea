@@ -5,9 +5,9 @@ import { DialogueComponent, LessonComponent, PatrolComponent } from './component
 const TILE_SIZE = 16;
 
 class NPC {
-  constructor(def, index) {
+  constructor(def, index, sprite) {
     this.pos = { x: def.x, y: def.y };
-    this.color = def.color || `hsl(${(index * 67) % 360},60%,50%)`;
+    this.sprite = sprite;
     this.components = [];
     if (def.dialogue) this.components.push(new DialogueComponent(def.dialogue));
     if (def.lesson) this.components.push(new LessonComponent(def.lesson));
@@ -19,8 +19,18 @@ class NPC {
   }
 
   render(ctx) {
-    ctx.fillStyle = this.color;
-    ctx.fillRect(this.pos.x * TILE_SIZE, this.pos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    if (!this.sprite) return;
+    ctx.drawImage(
+      this.sprite,
+      0,
+      0,
+      TILE_SIZE,
+      TILE_SIZE,
+      this.pos.x * TILE_SIZE,
+      this.pos.y * TILE_SIZE,
+      TILE_SIZE,
+      TILE_SIZE
+    );
   }
 }
 
@@ -29,8 +39,8 @@ class NPCManager {
     this.npcs = [];
   }
 
-  load(defs) {
-    this.npcs = defs.map((d, i) => new NPC(d, i));
+  load(defs, sprite) {
+    this.npcs = defs.map((d, i) => new NPC(d, i, sprite));
   }
 
   update(dt) {
