@@ -1,6 +1,4 @@
-import EventManager, { Events } from '../events/EventManager.js';
-import CollisionSystem from '../world/CollisionSystem.js';
-import SpriteAnimator from '../graphics/SpriteAnimator.js';
+import { Events } from '../events/EventManager.js';
 
 const TILE_SIZE = 16;
 const MOVE_TIME = 0.18; // seconds per tile
@@ -9,7 +7,18 @@ const MOVE_TIME = 0.18; // seconds per tile
  * Handles player movement and rendering with a Pokémon-style feel.
  */
 class PlayerController {
-  constructor(spriteImage, input) {
+  /**
+   * @param {import('../world/CollisionSystem.js').default} collisionSystem
+   * @param {import('../graphics/SpriteAnimator.js').default} animator
+   * @param {any} input
+   * @param {import('../events/EventManager.js').default} eventManager
+   */
+  constructor(collisionSystem, animator, input, eventManager) {
+    this.collisionSystem = collisionSystem;
+    this.animator = animator;
+    this.input = input;
+    this.eventManager = eventManager;
+
     this.gridPos = { x: 0, y: 0 }; // in tile coordinates
     this.pixelPos = { x: 0, y: 0 }; // interpolated pixel position
     this.direction = 'down';
@@ -22,18 +31,15 @@ class PlayerController {
     this.pending = [];
 
     this.enabled = true;
-    this.animator = new SpriteAnimator(spriteImage, 100);
-
-    this.input = input;
 
     // Disable movement during dialogues and quizzes
-    EventManager.subscribe(Events.DIALOGUE_STARTED, () => (this.enabled = false));
-    EventManager.subscribe(Events.QUIZ_STARTED, () => (this.enabled = false));
-    EventManager.subscribe(Events.DIALOGUE_FINISHED, () => (this.enabled = true));
-    EventManager.subscribe(Events.QUIZ_COMPLETED, () => (this.enabled = true));
+    this.eventManager.subscribe(Events.DIALOGUE_STARTED, () => (this.enabled = false));
+    this.eventManager.subscribe(Events.QUIZ_STARTED, () => (this.enabled = false));
+    this.eventManager.subscribe(Events.DIALOGUE_FINISHED, () => (this.enabled = true));
+    this.eventManager.subscribe(Events.QUIZ_COMPLETED, () => (this.enabled = true));
 
     // Listen to abstracted input events
-    EventManager.subscribe(Events.INPUT_DIRECTION_DOWN, (e) => this.enqueueMove(e.direction));
+    this.eventManager.subscribe(Events.INPUT_DIRECTION_DOWN, (e) => this.enqueueMove(e.direction));
   }
 
   enqueueMove(dir) {
@@ -52,7 +58,7 @@ class PlayerController {
       x: this.gridPos.x + delta.x,
       y: this.gridPos.y + delta.y,
     };
-    if (CollisionSystem.checkCollision(target.x, target.y)) {
+    if (this.collisionSystem.checkCollision(target.x, target.y)) {
       return false; // blocked
     }
     this.direction = dir;
@@ -64,7 +70,7 @@ class PlayerController {
     this.targetPixel.x = target.x * TILE_SIZE;
     this.targetPixel.y = target.y * TILE_SIZE;
     this.gridPos = target;
-    EventManager.emit(Events.PLAYER_MOVED, { pos: { ...this.gridPos } });
+    this.eventManager.emit(Events.PLAYER_MOVED, { pos: { ...this.gridPos } });
     return true;
   }
 
