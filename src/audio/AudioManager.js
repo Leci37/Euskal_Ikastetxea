@@ -14,6 +14,30 @@ class AudioManager {
     this.sfxGain.gain.value = 1;
     this.musicGain.connect(this.ctx.destination);
     this.sfxGain.connect(this.ctx.destination);
+
+    // Resume audio context on first user interaction to satisfy autoplay policies
+    this._resumeCtx = () => {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch((err) => console.error('Audio resume failed', err));
+      }
+    };
+    document.addEventListener('pointerdown', this._resumeCtx, { once: true });
+
+    // Attempt to keep context active when tab becomes visible again
+    this.ctx.onstatechange = () => {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch((err) => console.error('Context resume failed', err));
+      }
+    };
+
+    // Clean up audio resources on page unload
+    window.addEventListener('beforeunload', () => {
+      try {
+        this.ctx.close();
+      } catch (err) {
+        console.error('Audio context close failed', err);
+      }
+    });
   }
 
   /**
@@ -27,21 +51,43 @@ class AudioManager {
       const audio = AssetLoader.getAudio(asset.src);
       const response = await fetch(audio.src);
       const arrayBuffer = await response.arrayBuffer();
-      const buffer = await this.ctx.decodeAudioData(arrayBuffer);
-      this.buffers.set(asset.name, buffer);
+      const buffer = await this.ctx
+        .decodeAudioData(arrayBuffer)
+        .catch((err) => {
+          console.error('Audio decode error', err);
+          return null;
+        });
+      if (buffer) {
+        this.buffers.set(asset.name, buffer);
+      }
     }
   }
 
-  playMusic(name, loop = true) {
+  async resume() {
+    if (this.ctx.state === 'suspended') {
+      try {
+        await this.ctx.resume();
+      } catch (err) {
+        console.error('Audio resume failed', err);
+      }
+    }
+  }
+
+  async playMusic(name, loop = true) {
+    await this.resume();
     this.stopMusic();
     const buffer = this.buffers.get(name);
     if (!buffer) return;
-    const source = this.ctx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = loop;
-    source.connect(this.musicGain);
-    source.start();
-    this.musicSource = source;
+    try {
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = loop;
+      source.connect(this.musicGain);
+      source.start();
+      this.musicSource = source;
+    } catch (err) {
+      console.error('Music playback failed', err);
+    }
   }
 
   stopMusic(fade = 0.5) {
@@ -54,13 +100,18 @@ class AudioManager {
     this.musicSource = null;
   }
 
-  playSound(name) {
+  async playSound(name) {
+    await this.resume();
     const buffer = this.buffers.get(name);
     if (!buffer) return;
-    const src = this.ctx.createBufferSource();
-    src.buffer = buffer;
-    src.connect(this.sfxGain);
-    src.start();
+    try {
+      const src = this.ctx.createBufferSource();
+      src.buffer = buffer;
+      src.connect(this.sfxGain);
+      src.start();
+    } catch (err) {
+      console.error('Sound playback failed', err);
+    }
   }
 
   playEuskeraWord(word) {

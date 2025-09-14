@@ -12,7 +12,8 @@ class SaveManager {
   save(slotId, gameState) {
     try {
       const payload = { version: this.version, state: gameState };
-      localStorage.setItem(this._key(slotId), JSON.stringify(payload));
+      const encoded = btoa(JSON.stringify(payload));
+      localStorage.setItem(this._key(slotId), encoded);
     } catch (err) {
       console.error('Save failed', err);
     }
@@ -22,9 +23,15 @@ class SaveManager {
     try {
       const raw = localStorage.getItem(this._key(slotId));
       if (!raw) return null;
-      const data = JSON.parse(raw);
+      const decoded = atob(raw);
+      const data = JSON.parse(decoded);
+      if (typeof data !== 'object' || data === null) return null;
       if (data.version !== this.version) {
         console.warn('Save version mismatch', data.version, this.version);
+        return null;
+      }
+      if (typeof data.state !== 'object' || data.state === null) {
+        console.warn('Invalid save data');
         return null;
       }
       return data.state;
