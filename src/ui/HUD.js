@@ -9,9 +9,21 @@ class HUD {
   }
 
   render(ctx) {
-    ctx.fillStyle = '#fff';
-    ctx.fillText('XP: ' + ProgressService.data.xp, 5, 10);
-    if (this.lesson) ctx.fillText('Word: ' + this.lesson, 5, 20);
+    // Basque flag inspired banner
+    ctx.save();
+    const w = 70;
+    ctx.fillStyle = '#d50000'; // red
+    ctx.fillRect(2, 2, w, 6);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(2, 8, w, 6);
+    ctx.fillStyle = '#007a3d'; // green
+    ctx.fillRect(2, 14, w, 6);
+
+    ctx.fillStyle = '#000';
+    ctx.font = '10px monospace';
+    ctx.fillText('XP: ' + ProgressService.data.xp, 5, 28);
+    if (this.lesson) ctx.fillText('Word: ' + this.lesson, 5, 38);
+    ctx.restore();
   }
 }
 

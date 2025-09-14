@@ -47,6 +47,20 @@ class PlayerController {
     this.pending.push(dir);
   }
 
+  /**
+   * Compute the tile coordinates directly in front of the player.
+   * This helps interaction systems know which NPC or object is being
+   * faced without duplicating direction math elsewhere.
+   */
+  getFacingPos() {
+    const front = { x: this.gridPos.x, y: this.gridPos.y };
+    if (this.direction === 'up') front.y -= 1;
+    if (this.direction === 'down') front.y += 1;
+    if (this.direction === 'left') front.x -= 1;
+    if (this.direction === 'right') front.x += 1;
+    return front;
+  }
+
   _tryStartMove(dir) {
     const delta = { x: 0, y: 0 };
     if (dir === 'up') delta.y = -1;
