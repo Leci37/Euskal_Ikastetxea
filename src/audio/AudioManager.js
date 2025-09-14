@@ -14,6 +14,22 @@ class AudioManager {
     this.sfxGain.gain.value = 1;
     this.musicGain.connect(this.ctx.destination);
     this.sfxGain.connect(this.ctx.destination);
+
+    // resume context on first user gesture to satisfy autoplay policies
+    this._unlockHandler = () => {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch((err) => console.error('Audio resume failed', err));
+      }
+      document.removeEventListener('click', this._unlockHandler);
+      document.removeEventListener('touchstart', this._unlockHandler);
+    };
+    document.addEventListener('click', this._unlockHandler);
+    document.addEventListener('touchstart', this._unlockHandler);
+
+    // cleanup context when leaving page
+    window.addEventListener('beforeunload', () => {
+      this.ctx.close();
+    });
   }
 
   /**
@@ -24,11 +40,15 @@ class AudioManager {
     const paths = manifest.map((a) => a.src);
     await AssetLoader.loadAudio(paths);
     for (const asset of manifest) {
-      const audio = AssetLoader.getAudio(asset.src);
-      const response = await fetch(audio.src);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = await this.ctx.decodeAudioData(arrayBuffer);
-      this.buffers.set(asset.name, buffer);
+      try {
+        const audio = AssetLoader.getAudio(asset.src);
+        const response = await fetch(audio.src);
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = await this.ctx.decodeAudioData(arrayBuffer);
+        this.buffers.set(asset.name, buffer);
+      } catch (err) {
+        console.error('Audio load failed', err);
+      }
     }
   }
 
@@ -40,8 +60,15 @@ class AudioManager {
     source.buffer = buffer;
     source.loop = loop;
     source.connect(this.musicGain);
-    source.start();
-    this.musicSource = source;
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume().catch((err) => console.error('Resume failed', err));
+    }
+    try {
+      source.start();
+      this.musicSource = source;
+    } catch (err) {
+      console.error('Music playback failed', err);
+    }
   }
 
   stopMusic(fade = 0.5) {
@@ -60,7 +87,14 @@ class AudioManager {
     const src = this.ctx.createBufferSource();
     src.buffer = buffer;
     src.connect(this.sfxGain);
-    src.start();
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume().catch((err) => console.error('Resume failed', err));
+    }
+    try {
+      src.start();
+    } catch (err) {
+      console.error('Sound playback failed', err);
+    }
   }
 
   playEuskeraWord(word) {

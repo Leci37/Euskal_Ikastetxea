@@ -12,7 +12,9 @@ class SaveManager {
   save(slotId, gameState) {
     try {
       const payload = { version: this.version, state: gameState };
-      localStorage.setItem(this._key(slotId), JSON.stringify(payload));
+      const json = JSON.stringify(payload);
+      const encoded = btoa(unescape(encodeURIComponent(json)));
+      localStorage.setItem(this._key(slotId), encoded);
     } catch (err) {
       console.error('Save failed', err);
     }
@@ -22,12 +24,13 @@ class SaveManager {
     try {
       const raw = localStorage.getItem(this._key(slotId));
       if (!raw) return null;
-      const data = JSON.parse(raw);
-      if (data.version !== this.version) {
-        console.warn('Save version mismatch', data.version, this.version);
+      const decoded = decodeURIComponent(escape(atob(raw)));
+      const data = JSON.parse(decoded);
+      if (data.version !== this.version || !this._validate(data.state)) {
+        console.warn('Save validation failed');
         return null;
       }
-      return data.state;
+      return this._sanitize(data.state);
     } catch (err) {
       console.error('Load failed', err);
       return null;
@@ -36,6 +39,29 @@ class SaveManager {
 
   hasSave(slotId) {
     return localStorage.getItem(this._key(slotId)) !== null;
+  }
+
+  _validate(state) {
+    return state && typeof state === 'object';
+  }
+
+  _sanitize(obj) {
+    if (typeof obj === 'string') {
+      return obj.replace(/[&<>'"]/g, (c) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;',
+      })[c]);
+    }
+    if (Array.isArray(obj)) return obj.map((v) => this._sanitize(v));
+    if (obj && typeof obj === 'object') {
+      const res = {};
+      for (const [k, v] of Object.entries(obj)) res[k] = this._sanitize(v);
+      return res;
+    }
+    return obj;
   }
 }
 

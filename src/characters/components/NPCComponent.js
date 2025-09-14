@@ -21,7 +21,7 @@ export class LessonComponent extends NPCComponent {
     this.lessonId = lessonId;
   }
   trigger() {
-    EventManager.emit(Events.LESSON_COMPLETED, { lesson: this.lessonId });
+    EventManager.emit(Events.LESSON_COMPLETED, { lessonId: this.lessonId });
   }
 }
 
