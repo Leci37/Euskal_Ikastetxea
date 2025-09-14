@@ -41,7 +41,7 @@ class VocabularyQuizScene extends Scene {
     this.quizSystem.submitAnswer(this.selectedIndex);
     if (!this.quizSystem.active) {
       this._cleanup();
-      SceneManager.switchTo('OverworldScene');
+      SceneManager.switchTo('Overworld');
     } else {
       this.selectedIndex = 0;
     }

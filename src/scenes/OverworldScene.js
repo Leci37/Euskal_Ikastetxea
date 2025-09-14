@@ -5,11 +5,12 @@ import PlayerController from '../characters/PlayerController.js';
 import CollisionSystem from '../world/CollisionSystem.js';
 import InputHandler from '../core/InputHandler.js';
 import AssetLoader from '../core/AssetLoader.js';
-import EventManager from '../events/EventManager.js';
+import EventManager, { Events } from '../events/EventManager.js';
 import NPCManager from '../characters/NPCManager.js';
 import DialogueEngine from '../dialogue/DialogueEngine.js';
 import UIManager from '../ui/UIManager.js';
 import '../dialogue/DialogueSystem.js';
+import SceneManager from './SceneManager.js';
 
 class OverworldScene extends Scene {
   constructor() {
@@ -26,9 +27,11 @@ class OverworldScene extends Scene {
     this.dialogueEngine = DialogueEngine;
     this.ui = UIManager;
     this.fps = 0;
+    this.onDialogueFinished = this.onDialogueFinished.bind(this);
   }
 
   async onEnter(data) {
+    EventManager.subscribe(Events.DIALOGUE_FINISHED, this.onDialogueFinished);
     const map = await this.mapManager.load('entrance_hall', 'public/maps/entrance_hall.json');
     const tileset = map.tilesets?.[0];
     const tilesetPath = tileset ? `public/assets/tilesets/${tileset.image}` : null;
@@ -76,6 +79,16 @@ class OverworldScene extends Scene {
     this.npcManager.load(npcDefs, receptionistSprite);
 
     this.input.start();
+  }
+
+  onDialogueFinished(e) {
+    if (e.id === 'QUIZ_GIVER_INTRO') {
+      SceneManager.switchTo('VocabularyQuizScene', { quizId: 'VOCAB_QUIZ_1' });
+    }
+  }
+
+  onExit() {
+    EventManager.unsubscribe(Events.DIALOGUE_FINISHED, this.onDialogueFinished);
   }
 
   update(dt) {
