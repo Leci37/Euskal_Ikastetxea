@@ -7,6 +7,7 @@ class NPC {
     this.pos = { x: def.x, y: def.y };
     this.sprite = sprite;
     this.dialogueId = def.dialogueId || def.dialogue || null;
+    this.quizId = def.quizId || null;
     this.components = [];
     if (def.dialogueId || def.dialogue) {
       this.components.push(new DialogueComponent(this.dialogueId));
