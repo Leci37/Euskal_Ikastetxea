@@ -1,6 +1,6 @@
-import GameEngine from './src/core/GameEngine.js';
+import SystemCoordinator from './src/core/SystemCoordinator.js';
 
-const game = new GameEngine();
+const game = new SystemCoordinator();
 
 const assetManifest = {};
 

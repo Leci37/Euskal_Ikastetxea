@@ -58,9 +58,12 @@ An educational video game in 2D RPG format, similar to Pokémon, where students 
 #### **Core Classes**
 ```
 Game
-├── GameEngine (main engine)
+├── SystemCoordinator (system orchestration)
+├── CanvasRenderer (canvas management)
+├── GameLoop (main loop)
+├── AssetPreloader (resource loading)
 ├── StateManager (state management)
-├── AssetLoader (resource loading)
+├── AssetLoader (asset cache)
 └── SaveManager (player progress)
 
 World
