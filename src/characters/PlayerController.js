@@ -1,5 +1,6 @@
 import { Events } from '../events/EventManager.js';
 import SpriteAnimator from '../graphics/SpriteAnimator.js';
+import NPCManager from './NPCManager.js';
 
 const TILE_SIZE = 16;
 const MOVE_TIME = 0.18; // seconds per tile
@@ -41,6 +42,7 @@ class PlayerController {
 
     // Listen to abstracted input events
     this.eventManager.subscribe(Events.INPUT_DIRECTION_DOWN, (e) => this.enqueueMove(e.direction));
+    this.eventManager.subscribe(Events.INPUT_ACTION_PRESS, () => this.interact());
   }
 
   enqueueMove(dir) {
@@ -73,6 +75,22 @@ class PlayerController {
     this.gridPos = target;
     this.eventManager.emit(Events.PLAYER_MOVED, { pos: { ...this.gridPos } });
     return true;
+  }
+
+  interact() {
+    if (!this.enabled) return;
+    const delta = { x: 0, y: 0 };
+    if (this.direction === 'up') delta.y = -1;
+    if (this.direction === 'down') delta.y = 1;
+    if (this.direction === 'left') delta.x = -1;
+    if (this.direction === 'right') delta.x = 1;
+
+    const targetX = this.gridPos.x + delta.x;
+    const targetY = this.gridPos.y + delta.y;
+    const npc = NPCManager.getNpcAt(targetX, targetY);
+    if (npc) {
+      this.eventManager.emit(Events.DIALOGUE_STARTED, { id: npc.dialogueId });
+    }
   }
 
   update(dt) {

@@ -13,6 +13,7 @@ class DialogueEngine {
     this.activeId = null;
 
     EventManager.subscribe(Events.INPUT_ACTION_PRESS, () => this.advance());
+    EventManager.subscribe(Events.DIALOGUE_STARTED, (e) => this.startDialogue(e.id));
   }
 
   startDialogue(dialogueId) {
@@ -22,7 +23,6 @@ class DialogueEngine {
     this.script = Array.isArray(dialogue) ? dialogue : dialogue.lines;
     this.page = 0;
     this._showPage();
-    EventManager.emit(Events.DIALOGUE_STARTED, { id: dialogueId });
   }
 
   _showPage() {
