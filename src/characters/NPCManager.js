@@ -1,5 +1,3 @@
-import EventManager, { Events } from '../events/EventManager.js';
-import DialogueEngine from '../dialogue/DialogueEngine.js';
 import { DialogueComponent, LessonComponent, PatrolComponent } from './components/NPCComponent.js';
 
 const TILE_SIZE = 16;
@@ -8,6 +6,7 @@ class NPC {
   constructor(def, index, sprite) {
     this.pos = { x: def.x, y: def.y };
     this.sprite = sprite;
+    this.dialogueId = def.dialogue;
     this.components = [];
     if (def.dialogue) this.components.push(new DialogueComponent(def.dialogue));
     if (def.lesson) this.components.push(new LessonComponent(def.lesson));
@@ -49,6 +48,10 @@ class NPCManager {
 
   render(ctx) {
     this.npcs.forEach(n => n.render(ctx));
+  }
+
+  getNpcAt(x, y) {
+    return this.npcs.find(n => n.pos.x === x && n.pos.y === y) || null;
   }
 }
 
