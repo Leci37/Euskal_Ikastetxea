@@ -1,5 +1,5 @@
 import EventManager, { Events } from '../events/EventManager.js';
-import ProgressTracker from '../education/ProgressTracker.js';
+import ProgressService from '../services/ProgressService.js';
 
 class HUD {
   constructor() {
@@ -10,7 +10,8 @@ class HUD {
 
   render(ctx) {
     ctx.fillStyle = '#fff';
-    ctx.fillText('XP: ' + ProgressTracker.data.xp, 5, 10);
+    const { xp } = ProgressService.getState();
+    ctx.fillText('XP: ' + xp, 5, 10);
     if (this.lesson) ctx.fillText('Word: ' + this.lesson, 5, 20);
   }
 }
