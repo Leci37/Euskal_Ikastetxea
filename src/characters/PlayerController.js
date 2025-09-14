@@ -1,7 +1,6 @@
 import EventManager, { Events } from '../events/EventManager.js';
 import CollisionSystem from '../world/CollisionSystem.js';
 import SpriteAnimator from '../graphics/SpriteAnimator.js';
-import InputHandler from '../core/InputHandler.js';
 
 const TILE_SIZE = 16;
 const MOVE_TIME = 0.18; // seconds per tile
@@ -10,7 +9,7 @@ const MOVE_TIME = 0.18; // seconds per tile
  * Handles player movement and rendering with a Pokémon-style feel.
  */
 class PlayerController {
-  constructor(spriteImage) {
+  constructor(spriteImage, input) {
     this.gridPos = { x: 0, y: 0 }; // in tile coordinates
     this.pixelPos = { x: 0, y: 0 }; // interpolated pixel position
     this.direction = 'down';
@@ -24,6 +23,8 @@ class PlayerController {
 
     this.enabled = true;
     this.animator = new SpriteAnimator(spriteImage, 100);
+
+    this.input = input;
 
     // Disable movement during dialogues and quizzes
     EventManager.subscribe(Events.DIALOGUE_STARTED, () => (this.enabled = false));
@@ -79,7 +80,7 @@ class PlayerController {
         this.moving = false;
         this.state = 'idle';
         // Continue moving if direction is still held
-        if (InputHandler.isDown(this.direction)) {
+        if (this.input && this.input.isDown(this.direction)) {
           this._tryStartMove(this.direction);
         }
       }

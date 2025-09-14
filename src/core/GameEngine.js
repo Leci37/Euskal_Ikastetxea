@@ -22,7 +22,7 @@ export default class GameEngine {
 
     // Core managers
     this.sceneManager = SceneManager;
-    this.input = InputHandler;
+    this.input = new InputHandler();
     this.assets = AssetLoader;
 
     // Loop state
