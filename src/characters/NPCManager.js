@@ -46,8 +46,8 @@ class NPCManager {
     this.npcs = [];
   }
 
-  load(defs, sprite) {
-    this.npcs = defs.map((d, i) => new NPC(d, i, sprite));
+  load(defs, defaultSprite) {
+    this.npcs = defs.map((d, i) => new NPC(d, i, d.sprite || defaultSprite));
   }
 
   update(dt) {

@@ -26,7 +26,14 @@ class ContentDatabase {
           });
           break;
         case 'dialogue':
-          this.dialogues.set(m.key, data);
+          if (m.key) {
+            const lines = data[m.key] || data.lines || data;
+            this.dialogues.set(m.key, lines);
+          } else {
+            Object.entries(data).forEach(([key, lines]) => {
+              this.dialogues.set(key, lines);
+            });
+          }
           break;
         case 'quiz':
           this.quizzes.set(m.key, data);

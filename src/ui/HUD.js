@@ -10,7 +10,8 @@ class HUD {
 
   render(ctx) {
     ctx.fillStyle = '#fff';
-    ctx.fillText('XP: ' + ProgressService.data.xp, 5, 10);
+    const prog = ProgressService.data;
+    ctx.fillText('Lvl ' + prog.level + ' XP: ' + prog.xp, 5, 10);
     if (this.lesson) ctx.fillText('Word: ' + this.lesson, 5, 20);
   }
 }
