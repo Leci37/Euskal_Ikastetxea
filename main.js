@@ -5,10 +5,8 @@ import OverworldScene from './src/scenes/OverworldScene.js';
 const game = new GameEngine();
 SceneManager.registerScene('Overworld', OverworldScene);
 
-const assetManifest = {};
-
 async function main() {
-  await game.start(assetManifest);
+  await game.start();
   SceneManager.switchTo('Overworld');
 }
 

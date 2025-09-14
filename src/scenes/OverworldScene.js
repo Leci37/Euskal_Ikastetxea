@@ -9,6 +9,7 @@ import AssetLoader from '../core/AssetLoader.js';
 import EventManager from '../events/EventManager.js';
 import NPCManager from '../characters/NPCManager.js';
 import DialogueEngine from '../dialogue/DialogueEngine.js';
+import AudioManager from '../audio/AudioManager.js';
 
 class OverworldScene extends Scene {
   constructor() {
@@ -20,6 +21,32 @@ class OverworldScene extends Scene {
     this.tileEngine = new TileEngine(dummyCtx, 16);
     this.collisionSystem = CollisionSystem;
     this.input = new InputHandler();
+    this.animator = null;
+    this.player = null;
+    this.npcManager = NPCManager;
+    this.dialogueEngine = DialogueEngine;
+  }
+
+  async onEnter(data) {
+    const map = await this.mapManager.load('entrance_hall', 'public/maps/entrance_hall.json');
+    const tileset = map.tilesets?.[0];
+
+    const images = [];
+    if (tileset) {
+      this.tileEngine.tileSize = tileset.tilewidth || map.tilewidth || this.tileEngine.tileSize;
+      images.push(tileset.image);
+    }
+
+    images.push('player_sprite.png', 'receptionist_sprite.png', 'dialogue_box_pokemon_style.png');
+    await AssetLoader.loadImages(images);
+
+    const audioManifest = [
+      { name: 'school_theme', src: 'school_theme.ogg' },
+      { name: 'dialogue_tick', src: 'dialogue_tick.wav' },
+      { name: 'menu_select', src: 'menu_select.wav' },
+    ];
+    await AudioManager.load(audioManifest);
+
     const playerSprite = AssetLoader.getImage('player_sprite.png');
     this.animator = new SpriteAnimator(playerSprite);
     this.player = new PlayerController(
@@ -28,20 +55,12 @@ class OverworldScene extends Scene {
       this.input,
       EventManager,
     );
-    this.npcManager = NPCManager;
-    this.dialogueEngine = DialogueEngine;
-  }
-
-  async onEnter(data) {
-    const map = await this.mapManager.load('entrance_hall', 'public/maps/entrance_hall.json');
-    const tileset = map.tilesets?.[0];
-    if (tileset) {
-      this.tileEngine.tileSize = tileset.tilewidth || map.tilewidth || this.tileEngine.tileSize;
-      await AssetLoader.loadImages([tileset.image]);
-    }
 
     this.player.gridPos = { x: 5, y: 5 };
-    this.player.pixelPos = { x: 5 * 16, y: 5 * 16 };
+    this.player.pixelPos = {
+      x: 5 * this.tileEngine.tileSize,
+      y: 5 * this.tileEngine.tileSize,
+    };
 
     const objectLayer = map.layers?.find(l => l.type === 'objectgroup');
     const tileSize = map.tilewidth || this.tileEngine.tileSize;
@@ -54,6 +73,8 @@ class OverworldScene extends Scene {
           x: o.x / tileSize,
           y: o.y / tileSize,
           dialogue: props.dialogueId,
+          sprite: 'receptionist_sprite.png',
+          tileSize,
         };
       });
     this.npcManager.load(npcDefs);

@@ -37,18 +37,11 @@ export default class GameEngine {
   }
 
   /**
-     * Load assets then start the main loop.
-     * @param {Object} manifest { images: [], audio: [], json: [] }
-     */
-  async start(manifest = {}) {
+   * Start the main loop.
+   * Asset loading is now handled by individual scenes on-demand.
+   */
+  async start() {
     if (this.running) return;
-
-    // Load all assets before starting
-    await Promise.all([
-      this.assets.loadImages(manifest.images || []),
-      this.assets.loadAudio(manifest.audio || []),
-      this.assets.loadJSON(manifest.json || []),
-    ]);
 
     this.input.start();
     this.running = true;
