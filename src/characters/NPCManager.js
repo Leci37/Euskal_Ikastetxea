@@ -1,5 +1,3 @@
-import EventManager, { Events } from '../events/EventManager.js';
-import DialogueEngine from '../dialogue/DialogueEngine.js';
 import { DialogueComponent, LessonComponent, PatrolComponent } from './components/NPCComponent.js';
 
 const TILE_SIZE = 16;
@@ -8,8 +6,11 @@ class NPC {
   constructor(def, index, sprite) {
     this.pos = { x: def.x, y: def.y };
     this.sprite = sprite;
+    this.dialogueId = def.dialogueId || def.dialogue || null;
     this.components = [];
-    if (def.dialogue) this.components.push(new DialogueComponent(def.dialogue));
+    if (def.dialogueId || def.dialogue) {
+      this.components.push(new DialogueComponent(this.dialogueId));
+    }
     if (def.lesson) this.components.push(new LessonComponent(def.lesson));
     if (def.patrol) this.components.push(new PatrolComponent(def.patrol));
   }
@@ -57,13 +58,13 @@ class NPCManager {
   }
 
   /** Return NPC at grid coordinate */
-  getNPCAt(x, y) {
-    return this.npcs.find(n => n.pos.x === x && n.pos.y === y);
+  getNpcAt(x, y) {
+    return this.npcs.find(n => n.pos.x === x && n.pos.y === y) || null;
   }
 
   /** Trigger NPC at coordinate */
   interactAt(x, y) {
-    const npc = this.getNPCAt(x, y);
+    const npc = this.getNpcAt(x, y);
     npc?.interact();
   }
 
@@ -76,7 +77,7 @@ class NPCManager {
     if (dir === 'left') offset.x = -1;
     if (dir === 'right') offset.x = 1;
     const target = { x: player.gridPos.x + offset.x, y: player.gridPos.y + offset.y };
-    const npc = this.getNPCAt(target.x, target.y);
+    const npc = this.getNpcAt(target.x, target.y);
     if (!npc) return;
     const px = npc.pos.x * TILE_SIZE;
     const py = npc.pos.y * TILE_SIZE;

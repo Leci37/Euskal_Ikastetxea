@@ -122,15 +122,22 @@ class PlayerController {
 
   /** Interact with NPC in front of the player */
   interact() {
-    if (!this.npcManager) return;
+    if (!this.enabled || !this.npcManager) return;
+
     const offset = { x: 0, y: 0 };
     if (this.direction === 'up') offset.y = -1;
     if (this.direction === 'down') offset.y = 1;
     if (this.direction === 'left') offset.x = -1;
     if (this.direction === 'right') offset.x = 1;
-    const target = { x: this.gridPos.x + offset.x, y: this.gridPos.y + offset.y };
-    this.npcManager.interactAt(target.x, target.y);
-    AudioManager.playSound('interact');
+
+    const targetX = this.gridPos.x + offset.x;
+    const targetY = this.gridPos.y + offset.y;
+    const npc = this.npcManager.getNpcAt(targetX, targetY);
+
+    if (npc && npc.dialogueId) {
+      this.eventManager.emit(Events.DIALOGUE_STARTED, { id: npc.dialogueId });
+      AudioManager.playSound('interact');
+    }
   }
 
   render(ctx) {
