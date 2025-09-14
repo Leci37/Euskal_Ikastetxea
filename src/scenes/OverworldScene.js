@@ -11,6 +11,7 @@ import DialogueEngine from '../dialogue/DialogueEngine.js';
 import UIManager from '../ui/UIManager.js';
 import '../dialogue/DialogueSystem.js';
 import SceneManager from './SceneManager.js';
+import ContentDatabase from '../education/ContentDatabase.js';
 
 class OverworldScene extends Scene {
   constructor() {
@@ -43,6 +44,12 @@ class OverworldScene extends Scene {
     if (tilesetPath) imagesToLoad.unshift(tilesetPath);
     await AssetLoader.loadImages(imagesToLoad);
 
+    await ContentDatabase.load([
+      { type: 'dialogue', src: 'public/dialogues/dialogue_receptionist.json' },
+      { type: 'dialogue', src: 'public/dialogues/dialogue_quizmaster.json' },
+      { type: 'dialogue', src: 'public/dialogues/dialogue_board.json' },
+    ]);
+
     if (tileset) {
       this.tileEngine.tileSize = tileset.tilewidth || map.tilewidth || this.tileEngine.tileSize;
       const img = AssetLoader.getImage(tilesetPath);
@@ -64,8 +71,9 @@ class OverworldScene extends Scene {
 
     const objectLayer = map.layers?.find(l => l.type === 'objectgroup');
     const tileSize = map.tilewidth || this.tileEngine.tileSize;
+    const boardSprite = AssetLoader.createPlaceholder('board_sprite', 16, 16, 'green');
     const npcDefs = (objectLayer?.objects || [])
-      .filter(o => o.type === 'npc')
+      .filter(o => o.type === 'npc' || o.type === 'interactable')
       .map(o => {
         const props = {};
         (o.properties || []).forEach(p => (props[p.name] = p.value));
@@ -74,6 +82,7 @@ class OverworldScene extends Scene {
           y: o.y / tileSize,
           dialogue: props.dialogueId,
           quizId: props.quizId,
+          sprite: o.type === 'interactable' ? boardSprite : null,
         };
       });
     const receptionistSprite = AssetLoader.getImage(receptionistPath);
