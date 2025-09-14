@@ -599,6 +599,27 @@
               "value": 8
             }
           ]
+        },
+        {
+          "id": 4,
+          "name": "Quiz Master",
+          "type": "npc",
+          "x": 96,
+          "y": 128,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "dialogueId",
+              "type": "string",
+              "value": "QUIZ_GIVER_INTRO"
+            },
+            {
+              "name": "quizId",
+              "type": "string",
+              "value": "VOCAB_QUIZ_1"
+            }
+          ]
         }
       ]
     }
