@@ -1,0 +1,7 @@
+{
+  "RECEPTIONIST_GREETING": [
+    { "euskera": "Ongi etorri Euskal Ikastetxera!", "translation": "Welcome to the Basque School!" },
+    { "euskera": "Hemen nago laguntzeko.", "translation": "I am here to help." },
+    { "euskera": "Lehenengo gelara joan zaitezke.", "translation": "You can go to the first classroom." }
+  ]
+}
