@@ -17,111 +17,64 @@ class TileEngine {
     this.viewport.height = height;
   }
 
-  drawLayer(layer) {
-    const tileSize = this.tileSize;
-    const tileset = MapManager.current.tilesets[0];
-    let image = AssetLoader.getImage(tileset.image);
-    if (!image) {
-      // Try to load actual image; if it fails create a placeholder tileset
-      AssetLoader.loadImages([tileset.image])
-        .catch(() => AssetLoader.generateTilesetPlaceholder(tileset));
-      image = AssetLoader.getImage(tileset.image) || null;
-    }
+  drawLayer(layer, tilesetImage, tileset) {
+    if (!tilesetImage) return; // Don't draw if the image isn't ready
 
     const cols = tileset.columns;
-    const startCol = Math.max(Math.floor(this.camera.x / tileSize), 0);
-    const endCol = Math.min(Math.ceil((this.camera.x + this.viewport.width) / tileSize), layer.width);
-    const startRow = Math.max(Math.floor(this.camera.y / tileSize), 0);
-    const endRow = Math.min(Math.ceil((this.camera.y + this.viewport.height) / tileSize), layer.height);
+    const startCol = Math.max(Math.floor(this.camera.x / this.tileSize), 0);
+    const endCol = Math.min(
+      Math.ceil((this.camera.x + this.viewport.width) / this.tileSize),
+      layer.width
+    );
+    const startRow = Math.max(Math.floor(this.camera.y / this.tileSize), 0);
+    const endRow = Math.min(
+      Math.ceil((this.camera.y + this.viewport.height) / this.tileSize),
+      layer.height
+    );
 
     for (let y = startRow; y < endRow; y++) {
       for (let x = startCol; x < endCol; x++) {
         const index = y * layer.width + x;
         const id = layer.data[index];
         if (id === 0) continue;
-        if (image) {
-          const sx = ((id - 1) % cols) * tileSize;
-          const sy = Math.floor((id - 1) / cols) * tileSize;
-          this.ctx.drawImage(
-            image,
-            sx,
-            sy,
-            tileSize,
-            tileSize,
-            x * tileSize - this.camera.x,
-            y * tileSize - this.camera.y,
-            tileSize,
-            tileSize,
-          );
-        } else {
-          // basic variety fallback
-          const colors = ['#006233', '#ffffff', '#d52b1e', '#8b4513'];
-          const color = colors[id % colors.length];
-          this.ctx.fillStyle = color;
-          this.ctx.fillRect(
-            x * tileSize - this.camera.x,
-            y * tileSize - this.camera.y,
-            tileSize,
-            tileSize,
-          );
-        }
+
+        // Calculate source position from the tileset image
+        const sx = ((id - 1) % cols) * this.tileSize;
+        const sy = Math.floor((id - 1) / cols) * this.tileSize;
+
+        this.ctx.drawImage(
+          tilesetImage,
+          sx,
+          sy,
+          this.tileSize,
+          this.tileSize,
+          Math.floor(x * this.tileSize - this.camera.x),
+          Math.floor(y * this.tileSize - this.camera.y),
+          this.tileSize,
+          this.tileSize
+        );
       }
     }
   }
 
   render() {
-    MapManager.current.layers?.filter(l => l.type === 'tilelayer').forEach(l => this.drawLayer(l));
-    this._drawCollisionDebug();
-    this._drawGrid();
+    const map = MapManager.current;
+    if (!map || !map.tilesets || map.tilesets.length === 0) return;
+
+    const tileset = map.tilesets[0];
+    const tilesetPath = `public/assets/tilesets/${tileset.image}`;
+    const tilesetImage = AssetLoader.getImage(tilesetPath);
+
+    // Render tile layers using the actual tileset
+    const tileLayers = map.layers?.filter(
+      (l) => l.type === 'tilelayer' && l.name !== 'Collision'
+    );
+    tileLayers.forEach((layer) => this.drawLayer(layer, tilesetImage, tileset));
   }
 
   centerOn(x, y) {
     this.camera.x = x - this.viewport.width / 2;
     this.camera.y = y - this.viewport.height / 2;
-  }
-
-  _drawCollisionDebug() {
-    const map = MapManager.current;
-    const layer = map.layers?.find(l => l.name === 'Collision');
-    if (!layer) return;
-    const tileSize = this.tileSize;
-    const startCol = Math.max(Math.floor(this.camera.x / tileSize), 0);
-    const endCol = Math.min(Math.ceil((this.camera.x + this.viewport.width) / tileSize), layer.width);
-    const startRow = Math.max(Math.floor(this.camera.y / tileSize), 0);
-    const endRow = Math.min(Math.ceil((this.camera.y + this.viewport.height) / tileSize), layer.height);
-    this.ctx.strokeStyle = 'red';
-    for (let y = startRow; y < endRow; y++) {
-      for (let x = startCol; x < endCol; x++) {
-        const index = y * layer.width + x;
-        if (layer.data[index] > 0) {
-          this.ctx.strokeRect(
-            x * tileSize - this.camera.x,
-            y * tileSize - this.camera.y,
-            tileSize,
-            tileSize,
-          );
-        }
-      }
-    }
-  }
-
-  _drawGrid() {
-    const tileSize = this.tileSize;
-    const startCol = Math.floor(this.camera.x / tileSize);
-    const endCol = Math.ceil((this.camera.x + this.viewport.width) / tileSize);
-    const startRow = Math.floor(this.camera.y / tileSize);
-    const endRow = Math.ceil((this.camera.y + this.viewport.height) / tileSize);
-    this.ctx.strokeStyle = 'yellow';
-    for (let y = startRow; y < endRow; y++) {
-      for (let x = startCol; x < endCol; x++) {
-        this.ctx.strokeRect(
-          x * tileSize - this.camera.x,
-          y * tileSize - this.camera.y,
-          tileSize,
-          tileSize,
-        );
-      }
-    }
   }
 }
 

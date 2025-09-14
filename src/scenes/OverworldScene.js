@@ -9,7 +9,6 @@ import EventManager, { Events } from '../events/EventManager.js';
 import NPCManager from '../characters/NPCManager.js';
 import DialogueEngine from '../dialogue/DialogueEngine.js';
 import UIManager from '../ui/UIManager.js';
-import '../dialogue/DialogueSystem.js';
 import SceneManager from './SceneManager.js';
 import ContentDatabase from '../education/ContentDatabase.js';
 
@@ -33,31 +32,35 @@ class OverworldScene extends Scene {
 
   async onEnter(data) {
     EventManager.subscribe(Events.DIALOGUE_FINISHED, this.onDialogueFinished);
+    
+    // Load map data first to discover assets
     const map = await this.mapManager.load('entrance_hall', 'public/maps/entrance_hall.json');
     const tileset = map.tilesets?.[0];
-    const tilesetPath = tileset ? `public/assets/tilesets/${tileset.image}` : null;
-
+    const tilesetPath = tileset ? `public/assets/tilesets/${tileset.image.split('/').pop()}` : null;
+    
+    // Define all required assets for the scene
     const playerPath = 'public/assets/characters/player_sprite.png';
     const receptionistPath = 'public/assets/characters/receptionist_sprite.png';
+    const dialogueBoxPath = 'public/assets/ui/dialogue_box_pokemon_style.png';
 
-    const imagesToLoad = [playerPath, receptionistPath];
-    if (tilesetPath) imagesToLoad.unshift(tilesetPath);
-    await AssetLoader.loadImages(imagesToLoad);
-
-    await ContentDatabase.load([
-      { type: 'dialogue', src: 'public/dialogues/dialogue_receptionist.json' },
-      { type: 'dialogue', src: 'public/dialogues/dialogue_quizmaster.json' },
-      { type: 'dialogue', src: 'public/dialogues/dialogue_board.json' },
-    ]);
-
-    if (tileset) {
-      this.tileEngine.tileSize = tileset.tilewidth || map.tilewidth || this.tileEngine.tileSize;
-      const img = AssetLoader.getImage(tilesetPath);
-      if (!img || img.width === tileset.tilewidth) {
-        AssetLoader.generateTilesetPlaceholder({ ...tileset, image: tilesetPath });
-      }
+    const imagesToLoad = [playerPath, receptionistPath, dialogueBoxPath];
+    if (tilesetPath) {
+      imagesToLoad.push(tilesetPath);
     }
-
+    
+    // Load all images and dialogue content in parallel
+    await Promise.all([
+      AssetLoader.loadImages(imagesToLoad),
+      ContentDatabase.load([
+        { type: 'dialogue', src: 'public/dialogues/dialogue_receptionist.json' },
+        { type: 'dialogue', src: 'public/dialogues/dialogue_quizmaster.json' },
+        { type: 'dialogue', src: 'public/dialogues/dialogue_board.json' },
+      ])
+    ]);
+    
+    // Now that assets are loaded, initialize game objects
+    this.tileEngine.tileSize = map.tilewidth;
+    
     const playerSprite = AssetLoader.getImage(playerPath);
     this.player = new PlayerController(
       this.collisionSystem,
@@ -68,26 +71,27 @@ class OverworldScene extends Scene {
     );
     this.player.gridPos = { x: 5, y: 5 };
     this.player.pixelPos = { x: 5 * 16, y: 5 * 16 };
-
+    
     const objectLayer = map.layers?.find(l => l.type === 'objectgroup');
-    const tileSize = map.tilewidth || this.tileEngine.tileSize;
-    const boardSprite = AssetLoader.createPlaceholder('board_sprite', 16, 16, 'green');
     const npcDefs = (objectLayer?.objects || [])
       .filter(o => o.type === 'npc' || o.type === 'interactable')
       .map(o => {
         const props = {};
         (o.properties || []).forEach(p => (props[p.name] = p.value));
         return {
-          x: o.x / tileSize,
-          y: o.y / tileSize,
+          x: o.x / map.tilewidth,
+          y: o.y / map.tilewidth, // Tiled y-pos can be tricky, ensure it aligns to grid
           dialogue: props.dialogueId,
           quizId: props.quizId,
-          sprite: o.type === 'interactable' ? boardSprite : null,
+          spriteKey: props.sprite || (o.type === 'interactable' ? null : 'receptionist'),
         };
       });
-    const receptionistSprite = AssetLoader.getImage(receptionistPath);
-    this.npcManager.load(npcDefs, receptionistSprite);
-
+      
+    const spriteMap = {
+      receptionist: AssetLoader.getImage(receptionistPath)
+    };
+      
+    this.npcManager.load(npcDefs, spriteMap);
     this.input.start();
   }
 
@@ -102,6 +106,7 @@ class OverworldScene extends Scene {
 
   onExit() {
     EventManager.unsubscribe(Events.DIALOGUE_FINISHED, this.onDialogueFinished);
+    this.input.stop();
   }
 
   update(dt) {
@@ -111,8 +116,8 @@ class OverworldScene extends Scene {
     this.ui.update(dt);
     if (this.player) {
       this.tileEngine.centerOn(
-        (this.player.pixelPos.x || this.player.gridPos.x * 16) + 8,
-        (this.player.pixelPos.y || this.player.gridPos.y * 16) + 8,
+        this.player.pixelPos.x + 8,
+        this.player.pixelPos.y + 8,
       );
     }
     if (dt > 0) this.fps = 1 / dt;
@@ -125,12 +130,18 @@ class OverworldScene extends Scene {
     }
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
     this.tileEngine.render();
+    this.npcManager.render(ctx); // Render NPCs behind player
     this.player?.render(ctx);
-    this.npcManager.render(ctx);
-    this.npcManager.renderPrompts(ctx, this.player);
+    
+    // UI should render on top of everything
     this.dialogueEngine.render(ctx);
     this.ui.render(ctx);
+
+    // Keep debug info minimal
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0, 0, 50, 12);
     ctx.fillStyle = 'white';
     ctx.font = '10px monospace';
     ctx.fillText(

@@ -4,29 +4,19 @@ import MapManager from '../world/MapManager.js';
 import AudioManager from '../audio/AudioManager.js';
 
 const TILE_SIZE = 16;
-// Movement timing roughly matching Pokémon Emerald (250ms per tile)
-const MOVE_TIME = 0.25; // seconds per tile
+const MOVE_TIME = 0.25;
 
-/**
- * Handles player movement and rendering with a Pokémon-style feel.
- */
 class PlayerController {
-  /**
-   * @param {import('../world/CollisionSystem.js').default} collisionSystem
-   * @param {HTMLImageElement} spriteSheet
-   * @param {any} input
-   * @param {import('../events/EventManager.js').default} eventManager
-   * @param {import('./NPCManager.js').default} npcManager
-   */
   constructor(collisionSystem, spriteSheet, input, eventManager, npcManager) {
     this.collisionSystem = collisionSystem;
-    this.animator = new SpriteAnimator(spriteSheet);
+    // The player sprite is larger (32x32), but we handle it as 16x16 for grid logic
+    this.animator = new SpriteAnimator(spriteSheet, 150, TILE_SIZE, TILE_SIZE);
     this.input = input;
     this.eventManager = eventManager;
     this.npcManager = npcManager;
 
-    this.gridPos = { x: 0, y: 0 }; // in tile coordinates
-    this.pixelPos = { x: 0, y: 0 }; // interpolated pixel position
+    this.gridPos = { x: 0, y: 0 };
+    this.pixelPos = { x: 0, y: 0 };
     this.direction = 'down';
     this.state = 'idle';
 
@@ -38,13 +28,11 @@ class PlayerController {
 
     this.enabled = true;
 
-    // Disable movement during dialogues and quizzes
     this.eventManager.subscribe(Events.DIALOGUE_STARTED, () => (this.enabled = false));
     this.eventManager.subscribe(Events.QUIZ_STARTED, () => (this.enabled = false));
     this.eventManager.subscribe(Events.DIALOGUE_FINISHED, () => (this.enabled = true));
     this.eventManager.subscribe(Events.QUIZ_COMPLETED, () => (this.enabled = true));
 
-    // Listen to abstracted input events
     this.eventManager.subscribe(Events.INPUT_DIRECTION_DOWN, (e) => this.enqueueMove(e.direction));
     this.eventManager.subscribe(Events.INPUT_ACTION_PRESS, () => this.interact());
   }
@@ -66,7 +54,8 @@ class PlayerController {
       y: this.gridPos.y + delta.y,
     };
     if (this.collisionSystem.checkCollision(target.x, target.y)) {
-      return false; // blocked
+      this.direction = dir; // Face the wall
+      return false;
     }
     this.direction = dir;
     this.state = 'walking';
@@ -109,14 +98,11 @@ class PlayerController {
       this._tryStartMove(next);
     }
 
-    // Update animator
     if (this.moving) {
-      this.animator.update(dt * 1000); // animator expects ms
+      this.animator.update(dt * 1000);
     } else {
-      if (this.animator) {
-        this.animator.frame = 0;
-        this.animator.elapsed = 0;
-      }
+      this.animator.frame = 0; // Reset to idle frame
+      this.animator.elapsed = 0;
     }
   }
 
@@ -143,20 +129,9 @@ class PlayerController {
   render(ctx) {
     const px = this.moving ? this.pixelPos.x : this.gridPos.x * TILE_SIZE;
     const py = this.moving ? this.pixelPos.y : this.gridPos.y * TILE_SIZE;
-    if (!this.animator || !this.animator.sprite) return;
-    const frame = this.animator.frame;
-    const dirRow = { down: 0, left: 1, right: 2, up: 3 }[this.direction];
-    ctx.drawImage(
-      this.animator.sprite,
-      frame * TILE_SIZE,
-      dirRow * TILE_SIZE,
-      TILE_SIZE,
-      TILE_SIZE,
-      px,
-      py,
-      TILE_SIZE,
-      TILE_SIZE
-    );
+
+    // Use the animator to draw the correct frame based on direction
+    this.animator.render(ctx, px, py, this.direction);
   }
 }
 
