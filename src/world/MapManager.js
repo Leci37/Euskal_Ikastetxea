@@ -1,7 +1,7 @@
 import AssetLoader from '../core/AssetLoader.js';
 import EventManager, { Events } from '../events/EventManager.js';
 
-class MapManager {
+export class MapManager {
   constructor() {
     this.current = null;
     this.warps = [];

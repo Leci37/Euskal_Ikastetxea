@@ -14,7 +14,7 @@ const KEY_TO_DIR = {
 const ACTION_KEYS = ['Enter'];
 const CANCEL_KEYS = ['Escape'];
 
-class InputHandler {
+export default class InputHandler {
   constructor() {
     this.pressed = new Set();
     this.buffer = [];
@@ -86,6 +86,3 @@ class InputHandler {
     return events;
   }
 }
-
-const input = new InputHandler();
-export default input;

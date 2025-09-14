@@ -2,7 +2,7 @@ import ContentDatabase from './ContentDatabase.js';
 import EventManager, { Events } from '../events/EventManager.js';
 import AudioManager from '../audio/AudioManager.js';
 
-class QuizSystem {
+export default class QuizSystem {
   constructor() {
     this.active = null;
     this.score = 0;
@@ -29,6 +29,3 @@ class QuizSystem {
     this.active = null;
   }
 }
-
-const quiz = new QuizSystem();
-export default quiz;
