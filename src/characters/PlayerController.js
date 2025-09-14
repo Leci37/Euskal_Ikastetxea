@@ -1,4 +1,5 @@
 import { Events } from '../events/EventManager.js';
+import SpriteAnimator from '../graphics/SpriteAnimator.js';
 
 const TILE_SIZE = 16;
 const MOVE_TIME = 0.18; // seconds per tile
@@ -9,13 +10,13 @@ const MOVE_TIME = 0.18; // seconds per tile
 class PlayerController {
   /**
    * @param {import('../world/CollisionSystem.js').default} collisionSystem
-   * @param {import('../graphics/SpriteAnimator.js').default} animator
+   * @param {HTMLImageElement} spriteSheet
    * @param {any} input
    * @param {import('../events/EventManager.js').default} eventManager
    */
-  constructor(collisionSystem, animator, input, eventManager) {
+  constructor(collisionSystem, spriteSheet, input, eventManager) {
     this.collisionSystem = collisionSystem;
-    this.animator = animator;
+    this.animator = new SpriteAnimator(spriteSheet);
     this.input = input;
     this.eventManager = eventManager;
 
@@ -110,26 +111,20 @@ class PlayerController {
   render(ctx) {
     const px = this.moving ? this.pixelPos.x : this.gridPos.x * TILE_SIZE;
     const py = this.moving ? this.pixelPos.y : this.gridPos.y * TILE_SIZE;
-    if (this.animator && this.animator.sprite) {
-      const frame = this.animator.frame;
-      const dirRow = { down: 0, left: 1, right: 2, up: 3 }[this.direction];
-      ctx.drawImage(
-        this.animator.sprite,
-        frame * TILE_SIZE,
-        dirRow * TILE_SIZE,
-        TILE_SIZE,
-        TILE_SIZE,
-        px,
-        py,
-        TILE_SIZE,
-        TILE_SIZE
-      );
-    } else {
-      // Placeholder player rectangle
-      ctx.fillStyle = 'blue';
-      const size = TILE_SIZE * 2;
-      ctx.fillRect(px, py - (size - TILE_SIZE), size, size);
-    }
+    if (!this.animator || !this.animator.sprite) return;
+    const frame = this.animator.frame;
+    const dirRow = { down: 0, left: 1, right: 2, up: 3 }[this.direction];
+    ctx.drawImage(
+      this.animator.sprite,
+      frame * TILE_SIZE,
+      dirRow * TILE_SIZE,
+      TILE_SIZE,
+      TILE_SIZE,
+      px,
+      py,
+      TILE_SIZE,
+      TILE_SIZE
+    );
   }
 }
 

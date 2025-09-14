@@ -3,7 +3,6 @@ import MapManager from '../world/MapManager.js';
 import TileEngine from '../world/TileEngine.js';
 import PlayerController from '../characters/PlayerController.js';
 import CollisionSystem from '../world/CollisionSystem.js';
-import SpriteAnimator from '../graphics/SpriteAnimator.js';
 import InputHandler from '../core/InputHandler.js';
 import AssetLoader from '../core/AssetLoader.js';
 import EventManager from '../events/EventManager.js';
@@ -20,15 +19,7 @@ class OverworldScene extends Scene {
     this.tileEngine = new TileEngine(dummyCtx, 16);
     this.collisionSystem = CollisionSystem;
     this.input = new InputHandler();
-    const playerSprite = AssetLoader.getImage('player_sprite.png')
-      || AssetLoader.createPlaceholder('player_sprite.png', 32, 32, 'blue');
-    this.animator = new SpriteAnimator(playerSprite);
-    this.player = new PlayerController(
-      this.collisionSystem,
-      this.animator,
-      this.input,
-      EventManager,
-    );
+    this.player = null;
     this.npcManager = NPCManager;
     this.dialogueEngine = DialogueEngine;
     this.fps = 0;
@@ -37,19 +28,30 @@ class OverworldScene extends Scene {
   async onEnter(data) {
     const map = await this.mapManager.load('entrance_hall', 'public/maps/entrance_hall.json');
     const tileset = map.tilesets?.[0];
+    const tilesetPath = tileset ? `public/assets/tilesets/${tileset.image}` : null;
+
+    const playerPath = 'public/assets/characters/player_sprite.png';
+    const receptionistPath = 'public/assets/characters/receptionist_sprite.png';
+
+    const imagesToLoad = [playerPath, receptionistPath];
+    if (tilesetPath) imagesToLoad.unshift(tilesetPath);
+    await AssetLoader.loadImages(imagesToLoad);
+
     if (tileset) {
       this.tileEngine.tileSize = tileset.tilewidth || map.tilewidth || this.tileEngine.tileSize;
-      try {
-        await AssetLoader.loadImages([tileset.image]);
-      } catch {
-        /* ignore */
-      }
-      const img = AssetLoader.getImage(tileset.image);
+      const img = AssetLoader.getImage(tilesetPath);
       if (!img || img.width === tileset.tilewidth) {
-        AssetLoader.generateTilesetPlaceholder(tileset);
+        AssetLoader.generateTilesetPlaceholder({ ...tileset, image: tilesetPath });
       }
     }
 
+    const playerSprite = AssetLoader.getImage(playerPath);
+    this.player = new PlayerController(
+      this.collisionSystem,
+      playerSprite,
+      this.input,
+      EventManager,
+    );
     this.player.gridPos = { x: 5, y: 5 };
     this.player.pixelPos = { x: 5 * 16, y: 5 * 16 };
 
@@ -66,19 +68,22 @@ class OverworldScene extends Scene {
           dialogue: props.dialogueId,
         };
       });
-    this.npcManager.load(npcDefs);
+    const receptionistSprite = AssetLoader.getImage(receptionistPath);
+    this.npcManager.load(npcDefs, receptionistSprite);
 
     this.input.start();
   }
 
   update(dt) {
-    this.player.update(dt);
+    this.player?.update(dt);
     this.npcManager.update(dt);
     this.dialogueEngine.update(dt);
-    this.tileEngine.centerOn(
-      (this.player.pixelPos.x || this.player.gridPos.x * 16) + 8,
-      (this.player.pixelPos.y || this.player.gridPos.y * 16) + 8,
-    );
+    if (this.player) {
+      this.tileEngine.centerOn(
+        (this.player.pixelPos.x || this.player.gridPos.x * 16) + 8,
+        (this.player.pixelPos.y || this.player.gridPos.y * 16) + 8,
+      );
+    }
     if (dt > 0) this.fps = 1 / dt;
   }
 
@@ -90,13 +95,13 @@ class OverworldScene extends Scene {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     this.tileEngine.render();
-    this.player.render(ctx);
+    this.player?.render(ctx);
     this.npcManager.render(ctx);
     this.dialogueEngine.render(ctx);
     ctx.fillStyle = 'white';
     ctx.font = '10px monospace';
     ctx.fillText(
-      `(${this.player.gridPos.x},${this.player.gridPos.y}) ${this.fps.toFixed(0)}fps`,
+      `(${this.player?.gridPos.x ?? 0},${this.player?.gridPos.y ?? 0}) ${this.fps.toFixed(0)}fps`,
       2,
       10,
     );
