@@ -1,6 +1,5 @@
 import EventManager, { Events } from '../events/EventManager.js';
 import ContentDatabase from './ContentDatabase.js';
-import ProgressTracker from './ProgressTracker.js';
 
 class LessonManager {
   constructor() {
@@ -12,7 +11,6 @@ class LessonManager {
   }
 
   completeLesson(id) {
-    ProgressTracker.recordLesson(id);
     EventManager.emit(Events.LESSON_COMPLETED, { lesson: id });
     this.active = null;
   }

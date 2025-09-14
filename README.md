@@ -77,7 +77,7 @@ Characters
 
 Learning
 ├── LessonManager (lessons and content)
-├── ProgressTracker (progress tracking)
+├── ProgressService (progress tracking)
 ├── QuizSystem (assessments)
 └── RewardSystem (achievements and badges)
 

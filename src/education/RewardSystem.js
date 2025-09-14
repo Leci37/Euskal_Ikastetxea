@@ -1,5 +1,4 @@
 import EventManager, { Events } from '../events/EventManager.js';
-import ProgressTracker from './ProgressTracker.js';
 
 class RewardSystem {
   constructor() {

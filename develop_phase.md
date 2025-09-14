@@ -266,7 +266,7 @@
   - Learning objective tracking
   - Difficulty adaptation
   - Prerequisite checking
-- Create `ProgressTracker`:
+- Create `ProgressService`:
   - XP and level system
   - Vocabulary mastery tracking
   - Learning statistics

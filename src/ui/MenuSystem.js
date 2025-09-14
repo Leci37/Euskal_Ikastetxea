@@ -1,6 +1,6 @@
 import EventManager from '../events/EventManager.js';
 import StateManager, { States } from '../state/StateManager.js';
-import ProgressTracker from '../education/ProgressTracker.js';
+import ProgressService from '../education/ProgressService.js';
 
 class MenuSystem {
   constructor() {
@@ -23,7 +23,7 @@ class MenuSystem {
     ctx.fillRect(0, 0, 240, 160);
     ctx.fillStyle = '#fff';
     if (this.activeMenu === 'Progress') {
-      ctx.fillText('Level: ' + ProgressTracker.data.level, 20, 20);
+      ctx.fillText('Level: ' + ProgressService.data.level, 20, 20);
     } else {
       ctx.fillText(this.activeMenu, 20, 20);
     }
