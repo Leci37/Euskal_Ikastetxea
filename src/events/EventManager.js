@@ -1,38 +1,54 @@
-// Simple event bus singleton for decoupled communication
+// Decoupled message bus for communicating across systems
 class EventManager {
   constructor() {
     this.listeners = new Map();
   }
 
-  subscribe(event, callback) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
+  /**
+   * Register a callback for a specific event type.
+   * @param {string} eventType
+   * @param {Function} callback
+   */
+  subscribe(eventType, callback) {
+    if (!this.listeners.has(eventType)) {
+      this.listeners.set(eventType, new Set());
     }
-    this.listeners.get(event).add(callback);
+    this.listeners.get(eventType).add(callback);
   }
 
-  unsubscribe(event, callback) {
-    const set = this.listeners.get(event);
+  /**
+   * Remove a previously registered callback.
+   * @param {string} eventType
+   * @param {Function} callback
+   */
+  unsubscribe(eventType, callback) {
+    const set = this.listeners.get(eventType);
     if (set) {
       set.delete(callback);
+      if (set.size === 0) this.listeners.delete(eventType);
     }
   }
 
-  emit(event, payload) {
-    const set = this.listeners.get(event);
-    if (set) {
-      for (const cb of set) {
-        try {
-          cb(payload);
-        } catch (err) {
-          console.error('Event handler error', err);
-        }
+  /**
+   * Broadcast an event to all subscribers.
+   * @param {string} eventType
+   * @param {*} data
+   */
+  emit(eventType, data) {
+    const set = this.listeners.get(eventType);
+    if (!set) return;
+    for (const cb of set) {
+      try {
+        cb(data);
+      } catch (err) {
+        console.error('Event handler error', err);
       }
     }
   }
 }
 
-export const Events = {
+// Enumeration of all possible event types in the game.
+EventManager.Events = {
   FRAME_TICK: 'FRAME_TICK',
   PAUSE_GAME: 'PAUSE_GAME',
   RESUME_GAME: 'RESUME_GAME',
@@ -54,8 +70,9 @@ export const Events = {
   INPUT_ACTION_PRESS: 'INPUT_ACTION_PRESS',
   INPUT_ACTION_RELEASE: 'INPUT_ACTION_RELEASE',
   INPUT_CANCEL_PRESS: 'INPUT_CANCEL_PRESS',
-  INPUT_CANCEL_RELEASE: 'INPUT_CANCEL_RELEASE'
+  INPUT_CANCEL_RELEASE: 'INPUT_CANCEL_RELEASE',
 };
 
 const instance = new EventManager();
+export const Events = EventManager.Events;
 export default instance;
