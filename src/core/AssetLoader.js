@@ -1,58 +1,79 @@
-import EventManager, { Events } from '../events/EventManager.js';
-
 class AssetLoader {
   constructor() {
-    this.images = new Map();
-    this.audio = new Map();
-    this.json = new Map();
+    this.imageCache = new Map();
+    this.audioCache = new Map();
+    this.jsonCache = new Map();
   }
 
-  loadImage(key, src) {
+  loadImages(paths = []) {
+    const promises = paths.map(p => this._loadImage(p));
+    return Promise.all(promises);
+  }
+
+  loadAudio(paths = []) {
+    const promises = paths.map(p => this._loadAudio(p));
+    return Promise.all(promises);
+  }
+
+  loadJSON(paths = []) {
+    const promises = paths.map(p => this._loadJSON(p));
+    return Promise.all(promises);
+  }
+
+  _loadImage(path) {
+    if (this.imageCache.has(path)) {
+      return Promise.resolve(this.imageCache.get(path));
+    }
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        this.images.set(key, img);
-        EventManager.emit(Events.ASSET_LOADED, { type: 'image', key });
+        this.imageCache.set(path, img);
         resolve(img);
       };
       img.onerror = reject;
-      img.src = src;
+      img.src = path;
     });
   }
 
-  loadAudio(key, src) {
-    return fetch(src)
-      .then(r => r.arrayBuffer())
-      .then(buf => {
-        this.audio.set(key, buf);
-        EventManager.emit(Events.ASSET_LOADED, { type: 'audio', key });
-        return buf;
-      });
+  _loadAudio(path) {
+    if (this.audioCache.has(path)) {
+      return Promise.resolve(this.audioCache.get(path));
+    }
+    return new Promise((resolve, reject) => {
+      const audio = new Audio();
+      audio.addEventListener('canplaythrough', () => {
+        this.audioCache.set(path, audio);
+        resolve(audio);
+      }, { once: true });
+      audio.addEventListener('error', reject, { once: true });
+      audio.src = path;
+      audio.load();
+    });
   }
 
-  loadJSON(key, src) {
-    return fetch(src)
+  _loadJSON(path) {
+    if (this.jsonCache.has(path)) {
+      return Promise.resolve(this.jsonCache.get(path));
+    }
+    return fetch(path)
       .then(r => r.json())
       .then(data => {
-        this.json.set(key, data);
-        EventManager.emit(Events.ASSET_LOADED, { type: 'json', key });
+        this.jsonCache.set(path, data);
         return data;
       });
   }
 
-  loadAll(manifest) {
-    const promises = [];
-    manifest.images?.forEach(i => promises.push(this.loadImage(i.key, i.src)));
-    manifest.audio?.forEach(a => promises.push(this.loadAudio(a.key, a.src)));
-    manifest.json?.forEach(j => promises.push(this.loadJSON(j.key, j.src)));
-    return Promise.all(promises).then(() => {
-      EventManager.emit(Events.ASSETS_COMPLETE);
-    });
+  getImage(path) {
+    return this.imageCache.get(path);
   }
 
-  getImage(key) { return this.images.get(key); }
-  getAudio(key) { return this.audio.get(key); }
-  getJSON(key) { return this.json.get(key); }
+  getAudio(path) {
+    return this.audioCache.get(path);
+  }
+
+  getJSON(path) {
+    return this.jsonCache.get(path);
+  }
 }
 
 const loader = new AssetLoader();

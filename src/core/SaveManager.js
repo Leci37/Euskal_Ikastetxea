@@ -1,40 +1,44 @@
-import EventManager, { Events } from '../events/EventManager.js';
-
-const STORAGE_KEY = 'euskal_save';
+const SAVE_VERSION = 1;
 
 class SaveManager {
   constructor() {
-    EventManager.subscribe(Events.LESSON_COMPLETED, () => this.autoSave());
-    EventManager.subscribe(Events.QUIZ_COMPLETED, () => this.autoSave());
+    this.version = SAVE_VERSION;
   }
 
-  saveGame(data) {
+  _key(slotId) {
+    return `euskal_save_${slotId}`;
+  }
+
+  save(slotId, gameState) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.error('Save failed', e);
+      const payload = { version: this.version, state: gameState };
+      localStorage.setItem(this._key(slotId), JSON.stringify(payload));
+    } catch (err) {
+      console.error('Save failed', err);
     }
   }
 
-  loadGame() {
+  load(slotId) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      console.error('Load failed', e);
+      const raw = localStorage.getItem(this._key(slotId));
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data.version !== this.version) {
+        console.warn('Save version mismatch', data.version, this.version);
+        return null;
+      }
+      return data.state;
+    } catch (err) {
+      console.error('Load failed', err);
       return null;
     }
   }
 
-  deleteSave() {
-    localStorage.removeItem(STORAGE_KEY);
-  }
-
-  autoSave() {
-    const current = this.loadGame() || {};
-    this.saveGame(current);
+  hasSave(slotId) {
+    return localStorage.getItem(this._key(slotId)) !== null;
   }
 }
 
-const instance = new SaveManager();
-export default instance;
+const manager = new SaveManager();
+export default manager;
+export { SAVE_VERSION };
