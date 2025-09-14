@@ -4,7 +4,10 @@ const CORE_ASSETS = [
   '/index.html',
   '/main.js',
   '/service-worker.js',
-  '/src/core/GameEngine.js',
+  '/src/core/SystemCoordinator.js',
+  '/src/core/CanvasRenderer.js',
+  '/src/core/GameLoop.js',
+  '/src/core/AssetPreloader.js',
 ];
 
 self.addEventListener('install', (event) => {

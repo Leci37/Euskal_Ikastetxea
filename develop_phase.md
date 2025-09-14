@@ -12,7 +12,10 @@
   ```
   src/
   ├── core/
-  │   ├── GameEngine.js
+  │   ├── SystemCoordinator.js
+  │   ├── CanvasRenderer.js
+  │   ├── GameLoop.js
+  │   ├── AssetPreloader.js
   │   ├── AssetLoader.js
   │   └── InputHandler.js
   ├── scenes/
@@ -20,11 +23,11 @@
   ├── systems/
   └── utils/
   ```
-- Implement `GameEngine` class with:
-  - Canvas initialization (240x160 base resolution, scaled for modern displays)
-  - Game loop with `requestAnimationFrame`
-  - Delta time calculation for smooth 60fps
-  - Basic state management hooks
+- Implement `SystemCoordinator` composed of:
+  - `CanvasRenderer` for canvas initialization (240x160 base resolution, scaled for modern displays)
+  - `GameLoop` using `requestAnimationFrame` and delta time calculation
+  - `AssetPreloader` for loading assets before start
+  - Hooks for state management
 - Create `AssetLoader` with:
   - Image preloading with Promise-based loading
   - Asset caching system

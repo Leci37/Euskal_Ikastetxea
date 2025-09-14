@@ -2,6 +2,7 @@
 class EventManager {
   constructor() {
     this.listeners = new Map();
+    this.errorCounts = new WeakMap();
   }
 
   /**
@@ -40,8 +41,16 @@ class EventManager {
     for (const cb of set) {
       try {
         cb(data);
+        this.errorCounts.set(cb, 0);
       } catch (err) {
+        const count = (this.errorCounts.get(cb) || 0) + 1;
+        this.errorCounts.set(cb, count);
         console.error('Event handler error', err);
+        if (count >= 3) {
+          console.warn('Removing listener due to repeated errors.');
+          set.delete(cb);
+          this.emit(EventManager.Events.HANDLER_ERROR, { eventType, error: err });
+        }
       }
     }
   }
@@ -71,6 +80,7 @@ EventManager.Events = {
   INPUT_ACTION_RELEASE: 'INPUT_ACTION_RELEASE',
   INPUT_CANCEL_PRESS: 'INPUT_CANCEL_PRESS',
   INPUT_CANCEL_RELEASE: 'INPUT_CANCEL_RELEASE',
+  HANDLER_ERROR: 'HANDLER_ERROR',
 };
 
 const instance = new EventManager();
