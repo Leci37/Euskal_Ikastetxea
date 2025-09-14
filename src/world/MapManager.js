@@ -1,5 +1,6 @@
 import AssetLoader from '../core/AssetLoader.js';
 import EventManager, { Events } from '../events/EventManager.js';
+import GameState from '../state/GameState.js';
 
 class MapManager {
   constructor() {
@@ -12,6 +13,7 @@ class MapManager {
       this.current = data;
       this.warps = data.layers?.find(l => l.name === 'Warps')?.objects || [];
       EventManager.emit(Events.AREA_ENTERED, { area: name });
+      GameState.update({ map: { name } });
       return data;
     });
   }

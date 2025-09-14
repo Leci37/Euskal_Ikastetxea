@@ -1,6 +1,7 @@
 import EventManager, { Events } from '../events/EventManager.js';
 import ContentDatabase from '../education/ContentDatabase.js';
 import PokemonDialogueBox from '../ui/PokemonDialogueBox.js';
+import GameState from '../state/GameState.js';
 
 /**
  * Manages in-game conversations using a Pokémon-style presentation.
@@ -23,6 +24,7 @@ class DialogueEngine {
     this.page = 0;
     this._showPage();
     EventManager.emit(Events.DIALOGUE_STARTED, { id: dialogueId });
+    GameState.update({ dialogue: { id: dialogueId, page: this.page } });
   }
 
   _showPage() {
@@ -34,6 +36,7 @@ class DialogueEngine {
     const text = line.euskera || line.text || '';
     const translation = line.translation || '';
     this.box.show(text, translation);
+    GameState.update({ dialogue: { id: this.activeId, page: this.page } });
   }
 
   advance() {
@@ -56,6 +59,7 @@ class DialogueEngine {
     const id = this.activeId;
     this.activeId = null;
     EventManager.emit(Events.DIALOGUE_FINISHED, { id });
+    GameState.update({ dialogue: null });
   }
 
   update(dt) {

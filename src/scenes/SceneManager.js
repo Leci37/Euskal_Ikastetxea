@@ -1,4 +1,6 @@
 // Manages switching and updating of all game scenes.
+import GameState from '../state/GameState.js';
+
 class SceneManager {
   constructor() {
     this.registry = new Map(); // name -> Scene class
@@ -41,6 +43,7 @@ class SceneManager {
 
     this.current = newScene;
     this.transitioning = false;
+    GameState.update({ scene: sceneName });
   }
 
   /** Delegate update to active scene */

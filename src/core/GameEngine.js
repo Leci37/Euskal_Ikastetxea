@@ -43,17 +43,39 @@ export default class GameEngine {
   async start(manifest = {}) {
     if (this.running) return;
 
-    // Load all assets before starting
-    await Promise.all([
-      this.assets.loadImages(manifest.images || []),
-      this.assets.loadAudio(manifest.audio || []),
-      this.assets.loadJSON(manifest.json || []),
-    ]);
+    const critical = manifest.critical || manifest;
+    const optional = manifest.optional || {};
+
+    const total =
+      (critical.images?.length || 0) +
+      (critical.audio?.length || 0) +
+      (critical.json?.length || 0);
+
+    let loaded = 0;
+    const renderProgress = () => {
+      const progress = total === 0 ? 1 : loaded / total;
+      this._renderLoading(progress);
+      EventManager.emit(Events.ASSET_LOADED, { loaded, total });
+    };
+    renderProgress();
+    await this.assets.loadManifest(critical, (l, t) => {
+      loaded = l;
+      renderProgress();
+    });
+    EventManager.emit(Events.ASSETS_COMPLETE, { critical: true });
 
     this.input.start();
     this.running = true;
     this.lastTime = performance.now();
     this._frameId = requestAnimationFrame(this._boundLoop);
+
+    // Load non-critical assets in background
+    this.assets
+      .loadManifest(optional, (l, t) => {
+        EventManager.emit(Events.ASSET_LOADED, { loaded: l, total: t });
+        if (l === t) EventManager.emit(Events.ASSETS_COMPLETE, { critical: false });
+      })
+      .catch((err) => console.error('Optional assets failed to load', err));
   }
 
   /** Stop the game loop entirely */
@@ -100,6 +122,18 @@ export default class GameEngine {
   render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.sceneManager.render(this.ctx);
+  }
+
+  _renderLoading(progress) {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = '#000';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = '#fff';
+    this.ctx.fillText(`Loading ${Math.round(progress * 100)}%`, 10, 80);
+    const barWidth = this.canvas.width - 20;
+    this.ctx.strokeStyle = '#fff';
+    this.ctx.strokeRect(10, 100, barWidth, 10);
+    this.ctx.fillRect(10, 100, barWidth * progress, 10);
   }
 }
 
