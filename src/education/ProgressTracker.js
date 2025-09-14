@@ -1,5 +1,6 @@
 import SaveManager from '../core/SaveManager.js';
 import EventManager, { Events } from '../events/EventManager.js';
+import GameState from '../state/GameState.js';
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const XP_PER_LEVEL = 200; // simple progression curve
@@ -19,6 +20,8 @@ class ProgressTracker {
 
     EventManager.subscribe(Events.LESSON_COMPLETED, (e) => this._onLessonCompleted(e));
     EventManager.subscribe(Events.QUIZ_COMPLETED, (e) => this._onQuizCompleted(e));
+
+    GameState.update({ progress: { xp: this.xp, level: this.level } });
   }
 
   _onLessonCompleted({ lessonId, xp = 20, vocab = [] }) {
@@ -41,6 +44,8 @@ class ProgressTracker {
       this.level = LEVELS[currentIndex + 1];
       EventManager.emit(Events.LEVEL_UP, { level: this.level });
     }
+
+    GameState.update({ progress: { xp: this.xp, level: this.level } });
   }
 
   persist() {

@@ -2,6 +2,7 @@ import EventManager, { Events } from '../events/EventManager.js';
 import CollisionSystem from '../world/CollisionSystem.js';
 import SpriteAnimator from '../graphics/SpriteAnimator.js';
 import InputHandler from '../core/InputHandler.js';
+import GameState from '../state/GameState.js';
 
 const TILE_SIZE = 16;
 const MOVE_TIME = 0.18; // seconds per tile
@@ -33,6 +34,10 @@ class PlayerController {
 
     // Listen to abstracted input events
     EventManager.subscribe(Events.INPUT_DIRECTION_DOWN, (e) => this.enqueueMove(e.direction));
+
+    GameState.update({
+      player: { position: { ...this.gridPos }, direction: this.direction, state: this.state },
+    });
   }
 
   enqueueMove(dir) {
@@ -96,6 +101,10 @@ class PlayerController {
       this.animator.frame = 0;
       this.animator.elapsed = 0;
     }
+
+    GameState.update({
+      player: { position: { ...this.gridPos }, direction: this.direction, state: this.state },
+    });
   }
 
   render(ctx) {

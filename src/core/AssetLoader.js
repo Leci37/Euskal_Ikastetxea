@@ -20,6 +20,25 @@ class AssetLoader {
     return Promise.all(promises);
   }
 
+  /**
+   * Load a manifest of assets sequentially, reporting progress.
+   * @param {Object} manifest { images: [], audio: [], json: [] }
+   * @param {Function} onProgress (loaded, total)
+   */
+  async loadManifest(manifest = {}, onProgress = () => {}) {
+    const tasks = [];
+    (manifest.images || []).forEach(p => tasks.push(() => this._loadImage(p)));
+    (manifest.audio || []).forEach(p => tasks.push(() => this._loadAudio(p)));
+    (manifest.json || []).forEach(p => tasks.push(() => this._loadJSON(p)));
+    const total = tasks.length;
+    let loaded = 0;
+    for (const task of tasks) {
+      await task();
+      loaded += 1;
+      onProgress(loaded, total);
+    }
+  }
+
   _loadImage(path) {
     if (this.imageCache.has(path)) {
       return Promise.resolve(this.imageCache.get(path));

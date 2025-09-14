@@ -22,14 +22,15 @@ class TouchControls {
 
     this._createDPad();
     this._createButtons();
+    this._setupGestures();
   }
 
   _createButton(label, onStart, onEnd) {
     const btn = document.createElement('div');
     btn.textContent = label;
     btn.style.pointerEvents = 'auto';
-    btn.style.width = '40px';
-    btn.style.height = '40px';
+    btn.style.width = '12vw';
+    btn.style.height = '12vw';
     btn.style.margin = '5px';
     btn.style.border = '2px solid #666';
     btn.style.borderRadius = '8px';
@@ -41,6 +42,7 @@ class TouchControls {
     btn.addEventListener('touchstart', (e) => {
       e.preventDefault();
       onStart();
+      if (navigator.vibrate) navigator.vibrate(20);
     });
     btn.addEventListener('touchend', (e) => {
       e.preventDefault();
@@ -89,6 +91,44 @@ class TouchControls {
 
   _emitDir(dir, down) {
     EventManager.emit(down ? Events.INPUT_DIRECTION_DOWN : Events.INPUT_DIRECTION_UP, { direction: dir });
+  }
+
+  _setupGestures() {
+    let startX = 0;
+    let startY = 0;
+    this._gestureStart = (e) => {
+      const t = e.changedTouches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+    };
+    this._gestureEnd = (e) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      if (Math.max(absX, absY) > 30) {
+        if (absX > absY) {
+          const dir = dx > 0 ? 'right' : 'left';
+          this._emitDir(dir, true);
+          this._emitDir(dir, false);
+        } else {
+          const dir = dy > 0 ? 'down' : 'up';
+          this._emitDir(dir, true);
+          this._emitDir(dir, false);
+        }
+      }
+    };
+    window.addEventListener('touchstart', this._gestureStart, { passive: true });
+    window.addEventListener('touchend', this._gestureEnd, { passive: true });
+  }
+
+  destroy() {
+    if (!this.enabled) return;
+    window.removeEventListener('touchstart', this._gestureStart);
+    window.removeEventListener('touchend', this._gestureEnd);
+    this.root.remove();
+    this.enabled = false;
   }
 }
 
