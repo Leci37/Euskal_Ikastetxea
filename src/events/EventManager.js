@@ -60,6 +60,9 @@ class EventManager {
   constructor() {
     /** @type {Map<EventType, Set<(data: any) => void>>} */
     this.listeners = new Map();
+    /** @type {WeakMap<Function, number>} */
+    this.errorCounts = new WeakMap();
+    this.errorThreshold = 3;
   }
 
   /**
@@ -107,8 +110,15 @@ class EventManager {
     for (const cb of set) {
       try {
         cb(data);
+        this.errorCounts.delete(cb);
       } catch (err) {
+        const count = (this.errorCounts.get(cb) || 0) + 1;
+        this.errorCounts.set(cb, count);
         console.error('Event handler error', err);
+        if (count >= this.errorThreshold) {
+          console.warn(`Listener removed after ${count} errors for ${eventType}`);
+          set.delete(cb);
+        }
       }
     }
   }
